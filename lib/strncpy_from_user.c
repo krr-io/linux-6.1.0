@@ -8,6 +8,8 @@
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/mm.h>
+#include <asm/kvm_para.h>
+#include <linux/kvm_para.h>
 
 #include <asm/byteorder.h>
 #include <asm/word-at-a-time.h>
@@ -137,6 +139,9 @@ long strncpy_from_user(char *dst, const char __user *src, long count)
 		check_object_size(dst, count, false);
 		if (user_read_access_begin(src, max)) {
 			retval = do_strncpy_from_user(dst, src, count, max);
+
+			kvm_hypercall3(KVM_HC_RR_DATA_IN, (unsigned long) src, (unsigned long) dst, retval);
+
 			user_read_access_end();
 			return retval;
 		}

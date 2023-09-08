@@ -7,6 +7,8 @@
 #include <linux/minmax.h>
 #include <linux/sched.h>
 #include <linux/thread_info.h>
+#include <asm/kvm_para.h>
+#include <linux/kvm_para.h>
 
 #include <asm/uaccess.h>
 
@@ -407,6 +409,10 @@ static inline void user_access_restore(unsigned long flags) { }
 #endif
 #ifndef user_read_access_begin
 #define user_read_access_begin user_access_begin
+#define user_read_access_begin_rr(from, len) ({ \
+kvm_hypercall3(KVM_HC_RR_DATA_IN, (unsigned long) from, 0, len); \
+user_access_begin(from, len);\
+})
 #define user_read_access_end user_access_end
 #endif
 
