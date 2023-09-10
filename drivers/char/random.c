@@ -60,6 +60,9 @@
 #include <asm/irq_regs.h>
 #include <asm/io.h>
 
+#include <asm/kvm_para.h>
+#include <linux/kvm_para.h>
+
 /*********************************************************************
  *
  * Initialization and readiness waiting.
@@ -356,6 +359,9 @@ static void _get_random_bytes(void *buf, size_t len)
 	u8 tmp[CHACHA_BLOCK_SIZE];
 	size_t first_block_len;
 
+	size_t orig_len = len;
+	unsigned long orig_buf = (unsigned long) buf;
+
 	if (!len)
 		return;
 
@@ -379,6 +385,7 @@ static void _get_random_bytes(void *buf, size_t len)
 		buf += CHACHA_BLOCK_SIZE;
 	}
 
+	kvm_hypercall2(KVM_HC_RR_RANDOM, (unsigned long) orig_buf, orig_len);
 	memzero_explicit(chacha_state, sizeof(chacha_state));
 }
 

@@ -140,7 +140,7 @@ long strncpy_from_user(char *dst, const char __user *src, long count)
 		if (user_read_access_begin(src, max)) {
 			retval = do_strncpy_from_user(dst, src, count, max);
 
-			kvm_hypercall3(KVM_HC_RR_DATA_IN, (unsigned long) src, (unsigned long) dst, retval);
+			kvm_hypercall3(KVM_HC_RR_STRNCPY, (unsigned long) src, (unsigned long) dst, retval);
 
 			user_read_access_end();
 			return retval;
