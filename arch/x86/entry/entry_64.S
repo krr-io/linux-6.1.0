@@ -117,6 +117,8 @@ SYM_INNER_LABEL(entry_SYSCALL_64_after_hwframe, SYM_L_GLOBAL)
 	IBRS_ENTER
 	UNTRAIN_RET
 
+	vmcall
+
 	call	do_syscall_64		/* returns with IRQs disabled */
 
 	/*

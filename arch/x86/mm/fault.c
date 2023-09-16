@@ -4,6 +4,7 @@
  *  Copyright (C) 2001, 2002 Andi Kleen, SuSE Labs.
  *  Copyright (C) 2008-2009, Red Hat Inc., Ingo Molnar
  */
+#include <uapi/linux/kvm_para.h> /* KVM_HC_EXCP_PF */
 #include <linux/sched.h>		/* test_thread_flag(), ...	*/
 #include <linux/sched/task_stack.h>	/* task_stack_*(), ...		*/
 #include <linux/kdebug.h>		/* oops_begin/end, ...		*/
@@ -1533,6 +1534,7 @@ DEFINE_IDTENTRY_RAW_ERRORCODE(exc_page_fault)
 	unsigned long address = read_cr2();
 	irqentry_state_t state;
 
+	kvm_hypercall0(KVM_HC_EXCP_PF);
 	prefetchw(&current->mm->mmap_lock);
 
 	/*
