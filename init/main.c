@@ -1409,6 +1409,7 @@ static void __init do_basic_setup(void)
 	init_irq_proc();
 	do_ctors();
 	do_initcalls();
+	kvm_ivshmem_init();
 }
 
 static void __init do_pre_smp_initcalls(void)
