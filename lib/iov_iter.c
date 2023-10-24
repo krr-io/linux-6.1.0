@@ -13,6 +13,7 @@
 #include <net/checksum.h>
 #include <linux/scatterlist.h>
 #include <linux/instrumented.h>
+#include <asm/kernel_rr.h>
 
 #define PIPE_PARANOIA /* for now */
 
@@ -181,6 +182,7 @@ static int copyin(void *to, const void __user *from, size_t n)
 	if (access_ok(from, n)) {
 		instrument_copy_from_user_before(to, from, n);
 		res = raw_copy_from_user(to, from, n);
+		rr_record_cfu((unsigned long) from, to, n);
 		instrument_copy_from_user_after(to, from, n, res);
 	}
 	return res;
