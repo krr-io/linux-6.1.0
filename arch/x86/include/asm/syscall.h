@@ -130,7 +130,6 @@ void do_syscall_64(struct pt_regs *regs, int nr);
 void do_int80_syscall_32(struct pt_regs *regs);
 long do_fast_syscall_32(struct pt_regs *regs);
 void rr_record_syscall(struct pt_regs *regs);
-void rr_record_cfu(unsigned long from, unsigned long to, int n);
 
 #endif	/* CONFIG_X86_32 */
 

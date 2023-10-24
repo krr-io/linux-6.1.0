@@ -1533,7 +1533,7 @@ DEFINE_IDTENTRY_RAW_ERRORCODE(exc_page_fault)
 	unsigned long address = read_cr2();
 	irqentry_state_t state;
 
-	rr_record_exception(regs, error_code);
+	rr_record_exception(regs, error_code, address);
 
 	prefetchw(&current->mm->mmap_lock);
 

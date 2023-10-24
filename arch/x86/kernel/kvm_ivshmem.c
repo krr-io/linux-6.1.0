@@ -58,6 +58,8 @@ static int event_num;
 static struct semaphore sema;
 static wait_queue_head_t wait_queue;
 
+static bool inited_queue = false;
+
 static kvm_ivshmem_device kvm_ivshmem_dev;
 
 static int device_major_nr;
@@ -426,6 +428,98 @@ static void test_mem(void)
 	printk(KERN_INFO "Data verified %s\n", data2);
 }
 
+rr_event_log_guest* rr_get_tail_event(void)
+{
+    rr_event_log_guest *event;
+    rr_event_guest_queue_header *header;
+
+    header = (rr_event_guest_queue_header *)kvm_ivshmem_dev.base_addr;
+
+    if (header->current_pos == 0) {
+        return NULL;
+    }
+
+    event = (rr_event_log_guest *)(kvm_ivshmem_dev.base_addr + header->header_size + \
+                                   (header->current_pos - 1) * header->entry_size);
+
+    return event;    
+}
+
+rr_event_log_guest *rr_alloc_new_event_entry(void)
+{
+    rr_event_guest_queue_header *header;
+    rr_event_log_guest *entry;
+
+    header = (rr_event_guest_queue_header *)kvm_ivshmem_dev.base_addr;
+
+    if (header->current_pos == header->total_pos - 1) {
+        printk(KERN_ERR "RR queue is full\n");
+        return NULL;
+    }
+
+    entry = (rr_event_log_guest *)(kvm_ivshmem_dev.base_addr + \
+             header->header_size + header->current_pos * header->entry_size);
+    entry->id = header->current_pos;
+
+    header->current_pos++;
+
+    return entry;
+}
+
+void rr_append_to_queue(rr_event_log_guest *event_log)
+{
+    rr_event_guest_queue_header *header;
+
+    header = (rr_event_guest_queue_header *)kvm_ivshmem_dev.base_addr;
+
+    event_log->id = header->current_pos;
+
+    memcpy(kvm_ivshmem_dev.base_addr + header->header_size + header->current_pos * header->entry_size,
+           event_log, sizeof(rr_event_log_guest));
+
+    header->current_pos++;
+
+    return;
+}
+
+int rr_enabled(void)
+{
+    rr_event_guest_queue_header *header;
+    header = (rr_event_guest_queue_header *)kvm_ivshmem_dev.base_addr;
+
+    return header->rr_enabled;
+}
+
+static void rr_init_queue(void)
+{
+    rr_event_guest_queue_header header = {
+        .header_size = PAGE_SIZE,
+        .entry_size = 2 * PAGE_SIZE,
+        .rr_enabled = 0,
+    };
+
+    rr_event_log_guest *event;
+
+    event = kmalloc(sizeof(rr_event_log_guest), GFP_KERNEL);
+    event->type = 4;
+
+    header.current_pos = 0;
+    header.total_pos = (kvm_ivshmem_dev.ioaddr_size - header.header_size) / header.entry_size;
+
+    printk(KERN_INFO "Initialized RR shared memory, "
+          "header size=%d, current pos=%d, total_pos=%d\n", 
+          header.header_size, header.current_pos, header.total_pos);
+
+    memcpy(kvm_ivshmem_dev.base_addr, &header, sizeof(rr_event_guest_queue_header));
+
+    inited_queue = true;
+    return;
+}
+
+bool rr_queue_inited(void)
+{
+    return inited_queue;
+}
 
 int __init kvm_ivshmem_init(void)
 {
@@ -449,6 +543,8 @@ int __init kvm_ivshmem_init(void)
 	}
 
     test_mem();
+
+    rr_init_queue();
 
 	return 0;
 

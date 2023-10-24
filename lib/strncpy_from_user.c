@@ -9,6 +9,7 @@
 #include <linux/errno.h>
 #include <linux/mm.h>
 
+#include <asm/kernel_rr.h>
 #include <asm/byteorder.h>
 #include <asm/word-at-a-time.h>
 
@@ -138,6 +139,7 @@ long strncpy_from_user(char *dst, const char __user *src, long count)
 		if (user_read_access_begin(src, max)) {
 			retval = do_strncpy_from_user(dst, src, count, max);
 			user_read_access_end();
+			rr_record_cfu((unsigned long) src, dst, retval);
 			return retval;
 		}
 	}
