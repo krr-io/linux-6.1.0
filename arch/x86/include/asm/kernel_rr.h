@@ -12,9 +12,18 @@
 
 #define CFU_BUFFER_SIZE     4096
 
-// typedef struct {
-//     unsigned long value;
-// } rr_io_input;
+typedef struct {
+    unsigned long value;
+} rr_io_input;
+
+typedef struct {
+    int vector;
+    unsigned long ecx;
+} rr_interrupt;
+
+typedef struct {
+    unsigned long val;
+} rr_gfu;
 
 typedef struct {
     unsigned long src_addr;
@@ -23,10 +32,6 @@ typedef struct {
     unsigned long rdx;
     __u8 data[CFU_BUFFER_SIZE];
 } rr_cfu;
-
-// typedef struct {
-//     lapic_log lapic;
-// } rr_interrupt;
 
 typedef struct {
     int exception_index;
@@ -50,11 +55,16 @@ typedef struct rr_event_log_guest_t {
     int type;
     int id;
     union {
+        rr_interrupt interrupt;
         rr_exception exception;
         rr_syscall  syscall;
+        rr_io_input io_input;
         rr_cfu cfu;
         rr_random rand;
+        rr_gfu gfu;
     } event;
+    unsigned long inst_cnt;
+    unsigned long rip;
 } rr_event_log_guest;
 
 
@@ -71,5 +81,6 @@ bool rr_queue_inited(void);
 int rr_enabled(void);
 void rr_record_cfu(unsigned long from, void *to, long unsigned int n);
 void rr_record_gfu(unsigned long val);
+void rr_record_random(void *buf, int len);
 
 #endif /* _ASM_X86_KERNEL_RR_H */
