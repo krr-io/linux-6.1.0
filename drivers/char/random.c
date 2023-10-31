@@ -356,6 +356,9 @@ static void _get_random_bytes(void *buf, size_t len)
 	u8 tmp[CHACHA_BLOCK_SIZE];
 	size_t first_block_len;
 
+	size_t orig_len = len;
+	void *orig_buf = buf;
+
 	if (!len)
 		return;
 
@@ -378,6 +381,8 @@ static void _get_random_bytes(void *buf, size_t len)
 		len -= CHACHA_BLOCK_SIZE;
 		buf += CHACHA_BLOCK_SIZE;
 	}
+
+	rr_record_random(orig_buf, orig_len);
 
 	memzero_explicit(chacha_state, sizeof(chacha_state));
 }
