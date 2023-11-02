@@ -3,6 +3,7 @@
 
 __visible noinstr void rr_record_syscall(struct pt_regs *regs)
 {
+    unsigned long flags;
     rr_event_log_guest *event;
 
     if (!rr_queue_inited()) {
@@ -13,9 +14,11 @@ __visible noinstr void rr_record_syscall(struct pt_regs *regs)
         return;
     }
 
+    local_irq_save(flags);
+
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
-        return;
+        goto finish;
     }
 
     event->type = EVENT_TYPE_SYSCALL;
@@ -36,12 +39,14 @@ __visible noinstr void rr_record_syscall(struct pt_regs *regs)
     event->event.syscall.regs.r14 = regs->r14;
     event->event.syscall.regs.r15 = regs->r15;
 
-    return;
+finish:
+    local_irq_restore(flags);
 }
 
 void rr_record_exception(struct pt_regs *regs, int error_code, unsigned long cr2)
 {
     rr_event_log_guest *event;
+    unsigned long flags;
 
     if (!rr_queue_inited()) {
         return;
@@ -51,19 +56,24 @@ void rr_record_exception(struct pt_regs *regs, int error_code, unsigned long cr2
         return;
     }
 
+    local_irq_save(flags);
+
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
-        return;
+        goto finish;
     }
 
     event->type = EVENT_TYPE_EXCEPTION;
     event->event.exception.cr2 = cr2;
     event->event.exception.error_code = error_code;
 
+finish:
+    local_irq_restore(flags);
 }
 
 void rr_record_random(void *buf, int len)
 {
+    unsigned long flags;
     rr_event_log_guest *event;
 
     if (!rr_queue_inited()) {
@@ -74,18 +84,25 @@ void rr_record_random(void *buf, int len)
         return;
     }
 
+    local_irq_save(flags);
+
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        goto finish;
         return;
     }
 
     event->type = EVENT_TYPE_RANDOM;
     event->event.rand.len = len;
     memcpy(event->event.rand.data, buf, len);
+
+finish:
+    local_irq_restore(flags);
 }
 
 void rr_record_cfu(unsigned long from, void *to, long unsigned int n)
 {
+    unsigned long flags;
     rr_event_log_guest *event;
 
     if (!rr_queue_inited()) {
@@ -100,9 +117,11 @@ void rr_record_cfu(unsigned long from, void *to, long unsigned int n)
         BUG();
     }
 
+    local_irq_save(flags);
+
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
-        return;
+        goto finish;
     }
 
     event->type = EVENT_TYPE_CFU;
@@ -111,11 +130,13 @@ void rr_record_cfu(unsigned long from, void *to, long unsigned int n)
     event->event.cfu.len = n;
     memcpy(event->event.cfu.data, to, n);
 
-    return;
+finish:
+    local_irq_restore(flags);
 }
 
 void rr_record_gfu(unsigned long val)
 {
+    unsigned long flags;
     rr_event_log_guest *event;
 
     if (!rr_queue_inited()) {
@@ -126,11 +147,16 @@ void rr_record_gfu(unsigned long val)
         return;
     }
 
+    local_irq_save(flags);
+
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
-        return;
+        goto finish;
     }
 
     event->type = EVENT_TYPE_GFU;
     event->event.cfu.rdx = val;
+
+finish:
+    local_irq_restore(flags);
 }
