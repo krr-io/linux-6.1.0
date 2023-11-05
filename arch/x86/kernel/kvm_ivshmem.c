@@ -497,13 +497,13 @@ static void rr_init_queue(void)
         .entry_size = 2 * PAGE_SIZE,
         .rr_enabled = 0,
     };
-
     rr_event_log_guest *event;
+	int i;
 
     event = kmalloc(sizeof(rr_event_log_guest), GFP_KERNEL);
     event->type = 4;
 
-    header.current_pos = 0;
+	header.current_pos = 0;
     header.total_pos = (kvm_ivshmem_dev.ioaddr_size - header.header_size) / header.entry_size;
 
     printk(KERN_INFO "Initialized RR shared memory, "
@@ -511,6 +511,13 @@ static void rr_init_queue(void)
           header.header_size, header.current_pos, header.total_pos);
 
     memcpy(kvm_ivshmem_dev.base_addr, &header, sizeof(rr_event_guest_queue_header));
+
+	// Warmup to touch shared memory
+	for (i=0; i < header.total_pos; i++) {
+		rr_alloc_new_event_entry();
+	}
+
+	memcpy(kvm_ivshmem_dev.base_addr, &header, sizeof(rr_event_guest_queue_header));
 
     inited_queue = true;
     return;
