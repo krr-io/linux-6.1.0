@@ -100,9 +100,10 @@ finish:
     local_irq_restore(flags);
 }
 
-void rr_record_cfu(unsigned long from, void *to, long unsigned int n)
+void rr_record_cfu(const void __user *from, void *to, long unsigned int n)
 {
     unsigned long flags;
+    long ret;
     rr_event_log_guest *event;
 
     if (!rr_queue_inited()) {
@@ -125,10 +126,10 @@ void rr_record_cfu(unsigned long from, void *to, long unsigned int n)
     }
 
     event->type = EVENT_TYPE_CFU;
-    event->event.cfu.src_addr = from;
+    event->event.cfu.src_addr = (unsigned long)from;
     event->event.cfu.dest_addr = (unsigned long)to;
     event->event.cfu.len = n;
-    memcpy(event->event.cfu.data, to, n);
+    ret = raw_copy_from_user(event->event.cfu.data, from, n);
 
 finish:
     local_irq_restore(flags);
@@ -156,6 +157,64 @@ void rr_record_gfu(unsigned long val)
 
     event->type = EVENT_TYPE_GFU;
     event->event.cfu.rdx = val;
+
+finish:
+    local_irq_restore(flags);
+}
+
+
+void rr_record_strnlen_user(unsigned long val)
+{
+    unsigned long flags;
+    rr_event_log_guest *event;
+
+    if (!rr_queue_inited()) {
+        return;
+    }
+
+    if (!rr_enabled()) {
+        return;
+    }
+
+    local_irq_save(flags);
+
+    event = rr_alloc_new_event_entry();
+    if (event == NULL) {
+        goto finish;
+    }
+
+    event->type = EVENT_TYPE_CFU;
+    event->event.cfu.len = val;
+
+finish:
+    local_irq_restore(flags);
+}
+
+void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int n)
+{
+    unsigned long flags;
+    rr_event_log_guest *event;
+
+    if (!rr_queue_inited()) {
+        return;
+    }
+
+    if (!rr_enabled()) {
+        return;
+    }
+
+    local_irq_save(flags);
+
+    event = rr_alloc_new_event_entry();
+    if (event == NULL) {
+        goto finish;
+    }
+
+    event->type = EVENT_TYPE_CFU;
+    event->event.cfu.src_addr = (unsigned long)from;
+    event->event.cfu.dest_addr = (unsigned long)to;
+    event->event.cfu.len = n;
+    memcpy(event->event.cfu.data, to, n);
 
 finish:
     local_irq_restore(flags);

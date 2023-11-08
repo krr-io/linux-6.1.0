@@ -9,6 +9,7 @@
 #include <linux/thread_info.h>
 
 #include <asm/uaccess.h>
+#include <asm/kernel_rr.h>
 
 /*
  * Architectures should provide two primitives (raw_copy_{to,from}_user())
@@ -408,6 +409,11 @@ static inline void user_access_restore(unsigned long flags) { }
 #ifndef user_read_access_begin
 #define user_read_access_begin user_access_begin
 #define user_read_access_end user_access_end
+
+#define user_read_access_begin_rr(from, len) ({ \
+rr_record_cfu(from, 0, len); \
+user_access_begin(from, len);\
+})
 #endif
 
 #ifdef CONFIG_HARDENED_USERCOPY
