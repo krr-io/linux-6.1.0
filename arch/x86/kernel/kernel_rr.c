@@ -1,4 +1,5 @@
 #include <asm/kernel_rr.h>
+#include <asm/traps.h>
 #include <linux/ptrace.h>
 
 __visible noinstr void rr_record_syscall(struct pt_regs *regs)
@@ -38,12 +39,13 @@ __visible noinstr void rr_record_syscall(struct pt_regs *regs)
     event->event.syscall.regs.r13 = regs->r13;
     event->event.syscall.regs.r14 = regs->r14;
     event->event.syscall.regs.r15 = regs->r15;
+    event->event.syscall.cr3 = __read_cr3(); 
 
 finish:
     local_irq_restore(flags);
 }
 
-void rr_record_exception(struct pt_regs *regs, int error_code, unsigned long cr2)
+void rr_record_exception(struct pt_regs *regs, int vector, int error_code, unsigned long cr2)
 {
     rr_event_log_guest *event;
     unsigned long flags;
@@ -64,8 +66,25 @@ void rr_record_exception(struct pt_regs *regs, int error_code, unsigned long cr2
     }
 
     event->type = EVENT_TYPE_EXCEPTION;
+    event->event.exception.exception_index = vector;
     event->event.exception.cr2 = cr2;
     event->event.exception.error_code = error_code;
+    event->event.exception.regs.rax = regs->orig_ax;
+    event->event.exception.regs.rbx = regs->bx;
+    event->event.exception.regs.rcx = regs->cx;
+    event->event.exception.regs.rdx = regs->dx;
+    event->event.exception.regs.rsi = regs->si;
+    event->event.exception.regs.rdi = regs->di;
+    event->event.exception.regs.rsp = regs->sp;
+    event->event.exception.regs.rbp = regs->bp;
+    event->event.exception.regs.r8 = regs->r8;
+    event->event.exception.regs.r9 = regs->r9;
+    event->event.exception.regs.r10 = regs->r10;
+    event->event.exception.regs.r11 = regs->r11;
+    event->event.exception.regs.r12 = regs->r12;
+    event->event.exception.regs.r13 = regs->r13;
+    event->event.exception.regs.r14 = regs->r14;
+    event->event.exception.regs.r15 = regs->r15;
 
 finish:
     local_irq_restore(flags);
@@ -94,6 +113,7 @@ void rr_record_random(void *buf, int len)
 
     event->type = EVENT_TYPE_RANDOM;
     event->event.rand.len = len;
+    event->event.rand.buf = (unsigned long)buf;
     memcpy(event->event.rand.data, buf, len);
 
 finish:
@@ -156,7 +176,7 @@ void rr_record_gfu(unsigned long val)
     }
 
     event->type = EVENT_TYPE_GFU;
-    event->event.cfu.rdx = val;
+    event->event.gfu.val = val;
 
 finish:
     local_irq_restore(flags);
@@ -183,7 +203,7 @@ void rr_record_strnlen_user(unsigned long val)
         goto finish;
     }
 
-    event->type = EVENT_TYPE_CFU;
+    event->type = EVENT_TYPE_STRNLEN;
     event->event.cfu.len = val;
 
 finish:

@@ -9,6 +9,7 @@
 #define EVENT_TYPE_CFU       4
 #define EVENT_TYPE_RANDOM    5
 #define EVENT_TYPE_GFU       8
+#define EVENT_TYPE_STRNLEN   9
 
 #define CFU_BUFFER_SIZE     4096
 
