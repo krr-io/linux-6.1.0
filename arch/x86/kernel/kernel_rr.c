@@ -239,3 +239,30 @@ void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int
 finish:
     local_irq_restore(flags);
 }
+
+void rr_record_rdseed(unsigned long val)
+{
+    unsigned long flags;
+    rr_event_log_guest *event;
+
+    if (!rr_queue_inited()) {
+        return;
+    }
+
+    if (!rr_enabled()) {
+        return;
+    }
+
+    local_irq_save(flags);
+
+    event = rr_alloc_new_event_entry();
+    if (event == NULL) {
+        goto finish;
+    }
+
+    event->type = EVENT_TYPE_RDSEED;
+    event->event.gfu.val = val;
+
+finish:
+    local_irq_restore(flags);
+}
