@@ -10,6 +10,7 @@
 #define EVENT_TYPE_RANDOM    5
 #define EVENT_TYPE_GFU       8
 #define EVENT_TYPE_STRNLEN   9
+#define EVENT_TYPE_RDSEED    10
 
 #define CFU_BUFFER_SIZE     4096
 
@@ -85,5 +86,6 @@ void rr_record_gfu(unsigned long val);
 void rr_record_random(void *buf, int len);
 void rr_record_strnlen_user(unsigned long val);
 void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int n);
+void rr_record_rdseed(unsigned long val);
 
 #endif /* _ASM_X86_KERNEL_RR_H */

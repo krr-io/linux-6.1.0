@@ -359,8 +359,8 @@ static void _get_random_bytes(void *buf, size_t len)
 	size_t first_block_len;
 	unsigned long flags;
 
-	size_t orig_len = len;
-	void *orig_buf = buf;
+	// size_t orig_len = len;
+	// void *orig_buf = buf;
 
 	if (!len)
 		return;
@@ -389,7 +389,7 @@ static void _get_random_bytes(void *buf, size_t len)
 
 	local_irq_restore(flags);
 	// rr_record_random(orig_buf, orig_len);
-	kvm_hypercall2(15, (unsigned long) orig_buf, orig_len);
+	// kvm_hypercall2(15, (unsigned long) orig_buf, orig_len);
 
 	memzero_explicit(chacha_state, sizeof(chacha_state));
 }

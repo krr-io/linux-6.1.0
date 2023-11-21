@@ -12,6 +12,7 @@
 
 #include <asm/processor.h>
 #include <asm/cpufeature.h>
+#include <asm/kernel_rr.h>
 
 #define RDRAND_RETRY_LOOPS	10
 
@@ -37,6 +38,9 @@ static inline bool __must_check rdseed_long(unsigned long *v)
 	asm volatile("rdseed %[out]"
 		     CC_SET(c)
 		     : CC_OUT(c) (ok), [out] "=r" (*v));
+
+	rr_record_rdseed(*v);
+
 	return ok;
 }
 
