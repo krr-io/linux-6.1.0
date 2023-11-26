@@ -32,8 +32,8 @@ with open(TRACE_FILE, 'a') as f:
     while True:
         gdb.execute("stepi")
         pc = gdb.parse_and_eval("$pc").cast(t)
-        # f.write("{}\n".format(pc))
-        if pc == 0xffffffff81030620:
+        f.write("{}\n".format(pc))
+        if pc == 0xffffffff81439d94:
             break
 
 gdb.execute("continue")
