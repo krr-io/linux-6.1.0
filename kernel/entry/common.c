@@ -10,6 +10,7 @@
 #include <linux/audit.h>
 #include <linux/tick.h>
 #include <linux/kvm_para.h>
+#include <asm/kernel_rr.h>
 
 #include "common.h"
 
@@ -318,7 +319,9 @@ noinstr irqentry_state_t irqentry_enter(struct pt_regs *regs)
 		.exit_rcu = false,
 	};
 
-	kvm_hypercall0(KVM_HC_ENTER_KERNEL);
+	// kvm_hypercall0(KVM_HC_ENTER_KERNEL);
+
+	rr_acquire_smp_exec();
 
 	if (user_mode(regs)) {
 		irqentry_enter_from_user_mode(regs);
@@ -446,7 +449,8 @@ noinstr void irqentry_exit(struct pt_regs *regs, irqentry_state_t state)
 			ct_irq_exit();
 	}
 
-	kvm_hypercall0(KVM_HC_EXIT_KERNEL);
+	rr_release_smp_exec();
+	// kvm_hypercall0(KVM_HC_EXIT_KERNEL);
 }
 
 irqentry_state_t noinstr irqentry_nmi_enter(struct pt_regs *regs)

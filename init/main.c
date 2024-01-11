@@ -108,6 +108,7 @@
 #include <asm/setup.h>
 #include <asm/sections.h>
 #include <asm/cacheflush.h>
+#include <asm/kernel_rr.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/initcall.h>
@@ -1634,6 +1635,8 @@ static noinline void __init kernel_init_freeable(void)
 
 	wait_for_initramfs();
 	console_on_rootfs();
+
+	init_smp_exec_lock();
 
 	/*
 	 * check if there is an early userspace init.  If yes, let it do all

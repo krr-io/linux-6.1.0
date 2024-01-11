@@ -48,6 +48,7 @@
 #include <asm/frame.h>
 #include <asm/unwind.h>
 #include <asm/tdx.h>
+#include <asm/kernel_rr.h>
 
 #include "process.h"
 
@@ -728,6 +729,7 @@ void arch_cpu_idle(void)
  */
 void __cpuidle default_idle(void)
 {
+	rr_release_smp_exec();
 	raw_safe_halt();
 }
 #if defined(CONFIG_APM_MODULE) || defined(CONFIG_HALTPOLL_CPUIDLE_MODULE)

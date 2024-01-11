@@ -35,6 +35,7 @@
 #include <asm/io_bitmap.h>
 #include <asm/syscall.h>
 #include <asm/irq_stack.h>
+#include <asm/kernel_rr.h>
 
 #ifdef CONFIG_X86_64
 
@@ -73,7 +74,8 @@ static __always_inline bool do_syscall_x32(struct pt_regs *regs, int nr)
 
 __visible noinstr void do_syscall_64(struct pt_regs *regs, int nr)
 {
-	kvm_hypercall0(KVM_HC_ENTER_KERNEL);
+	rr_acquire_smp_exec();
+	// kvm_hypercall0(KVM_HC_ENTER_KERNEL);
 	add_random_kstack_offset();
 	nr = syscall_enter_from_user_mode(regs, nr);
 
@@ -86,7 +88,8 @@ __visible noinstr void do_syscall_64(struct pt_regs *regs, int nr)
 
 	instrumentation_end();
 	syscall_exit_to_user_mode(regs);
-	kvm_hypercall0(KVM_HC_EXIT_KERNEL);
+	// kvm_hypercall0(KVM_HC_EXIT_KERNEL);
+	rr_release_smp_exec();
 }
 #endif
 

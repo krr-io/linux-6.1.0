@@ -7,6 +7,7 @@
  *        tasks which are handled in sched/fair.c )
  */
 #include <linux/kvm_para.h>
+#include <asm/kernel_rr.h>
 
 /* Linker adds these: start and end of __cpuidle functions */
 extern char __cpuidle_text_start[], __cpuidle_text_end[];
@@ -276,6 +277,8 @@ static void do_idle(void)
 
 	__current_set_polling();
 	tick_nohz_idle_enter();
+
+	rr_release_smp_exec();
 
 	while (!need_resched()) {
 		rmb();

@@ -76,6 +76,7 @@
 #include <asm/irq_regs.h>
 #include <asm/switch_to.h>
 #include <asm/tlb.h>
+#include <asm/kernel_rr.h>
 
 #define CREATE_TRACE_POINTS
 #include <linux/sched/rseq_api.h>
@@ -6592,14 +6593,17 @@ asmlinkage __visible void __sched schedule(void)
 	struct task_struct *tsk = current;
 
 	sched_submit_work(tsk);
+	// rr_release_smp_exec();
 	do {
 		preempt_disable();
 		__schedule(SM_NONE);
 		sched_preempt_enable_no_resched();
 	} while (need_resched());
+	// rr_acquire_smp_exec();
 	sched_update_worker(tsk);
 }
 EXPORT_SYMBOL(schedule);
+
 
 /*
  * synchronize_rcu_tasks() makes sure that no task is stuck in preempted
