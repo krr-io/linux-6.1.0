@@ -34,15 +34,33 @@ void rr_acquire_smp_exec(void)
     arch_spin_lock(&exec_lock);
 
     atomic_set(&current_owner, cpu_id);
-
+    // printk(KERN_INFO "%d acquired lock", cpu_id);
 out:
     preempt_enable();
 }
 
+static void rr_bug(void){};
+
 void rr_release_smp_exec(void)
 {
+    int cur_owner;
+    int cpu_id;
     if (!initialized)
         return;
+
+    preempt_disable();
+    cur_owner = atomic_read(&current_owner);
+    cpu_id = smp_processor_id();
+    if (cur_owner != cpu_id) {
+        // printk(KERN_ERR "expected %d actual owner %d", cpu_id, cur_owner);
+        rr_bug();
+        preempt_enable();
+        return;
+    } else {
+        // printk(KERN_ERR "%d released lock", cpu_id);
+
+    }
+    preempt_enable();
 
     atomic_set(&current_owner, -1);
     arch_spin_unlock(&exec_lock);

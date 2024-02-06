@@ -731,6 +731,7 @@ void __cpuidle default_idle(void)
 {
 	rr_release_smp_exec();
 	raw_safe_halt();
+	rr_acquire_smp_exec();
 }
 #if defined(CONFIG_APM_MODULE) || defined(CONFIG_HALTPOLL_CPUIDLE_MODULE)
 EXPORT_SYMBOL(default_idle);

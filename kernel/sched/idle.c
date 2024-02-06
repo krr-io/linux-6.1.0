@@ -278,7 +278,7 @@ static void do_idle(void)
 	__current_set_polling();
 	tick_nohz_idle_enter();
 
-	rr_release_smp_exec();
+	// rr_release_smp_exec();
 
 	while (!need_resched()) {
 		rmb();
