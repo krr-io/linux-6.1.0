@@ -5206,6 +5206,9 @@ context_switch(struct rq *rq, struct task_struct *prev,
 
 	prepare_lock_switch(rq, next, rf);
 
+	if (rr_is_switch_to_user(next))
+		rr_release_smp_exec();
+
 	/* Here we just switch the register state and the stack. */
 	switch_to(prev, next, prev);
 	barrier();
@@ -6593,13 +6596,11 @@ asmlinkage __visible void __sched schedule(void)
 	struct task_struct *tsk = current;
 
 	sched_submit_work(tsk);
-	rr_release_smp_exec();
 	do {
 		preempt_disable();
 		__schedule(SM_NONE);
 		sched_preempt_enable_no_resched();
 	} while (need_resched());
-	rr_acquire_smp_exec();
 	sched_update_worker(tsk);
 }
 EXPORT_SYMBOL(schedule);

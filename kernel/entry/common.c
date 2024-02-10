@@ -416,6 +416,7 @@ noinstr void irqentry_exit(struct pt_regs *regs, irqentry_state_t state)
 	/* Check whether this returns to user mode */
 	if (user_mode(regs)) {
 		irqentry_exit_to_user_mode(regs);
+		rr_release_smp_exec();
 	} else if (!regs_irqs_disabled(regs)) {
 		/*
 		 * If RCU was not watching on entry this needs to be done
@@ -449,7 +450,6 @@ noinstr void irqentry_exit(struct pt_regs *regs, irqentry_state_t state)
 			ct_irq_exit();
 	}
 
-	rr_release_smp_exec();
 	// kvm_hypercall0(KVM_HC_EXIT_KERNEL);
 }
 

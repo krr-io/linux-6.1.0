@@ -1636,8 +1636,6 @@ static noinline void __init kernel_init_freeable(void)
 	wait_for_initramfs();
 	console_on_rootfs();
 
-	init_smp_exec_lock();
-
 	/*
 	 * check if there is an early userspace init.  If yes, let it do all
 	 * the work
@@ -1657,4 +1655,6 @@ static noinline void __init kernel_init_freeable(void)
 	 */
 
 	integrity_load_keys();
+
+	init_smp_exec_lock();
 }
