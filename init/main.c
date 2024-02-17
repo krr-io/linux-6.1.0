@@ -1540,6 +1540,8 @@ static int __ref kernel_init(void *unused)
 
 	rcu_end_inkernel_boot();
 
+	init_smp_exec_lock();
+
 	do_sysctl_args();
 
 	if (ramdisk_execute_command) {
@@ -1655,6 +1657,4 @@ static noinline void __init kernel_init_freeable(void)
 	 */
 
 	integrity_load_keys();
-
-	init_smp_exec_lock();
 }

@@ -20,17 +20,20 @@ void init_smp_exec_lock(void)
     initialized = 1;
 }
 
-void rr_acquire_smp_exec(void)
+void rr_acquire_smp_exec(int ctx)
 {
     int cpu_id;
     unsigned long flags;
+    int cur;
 
     if (!initialized)
         return;
 
     preempt_disable();
     cpu_id = smp_processor_id();
+    cur = current_owner;
 
+    // printk(KERN_INFO "%d acquiring, owner %d", cpu_id, cur);
     if (current_owner == cpu_id){
         goto out;
     }
@@ -55,21 +58,38 @@ __maybe_unused void rr_bug(int expected, int cur) {
     printk(KERN_ERR "expected %d actual owner %d", expected, cur);
 };
 
-void rr_release_smp_exec(void)
+void rr_switch(unsigned long next_rip) {
+     printk(KERN_INFO "switch rip 0x%lx", next_rip);
+}
+
+void rr_release_smp_exec(int ctx)
 {
+    int cpu_id;
+    int cur;
+    unsigned long flags;
+
     if (!initialized)
         return;
+
+    local_irq_save(flags);
 
     current_owner = -1;
 
     arch_spin_unlock(&exec_lock);
+    local_irq_restore(flags);
 }
 
-bool rr_is_switch_to_user(struct task_struct *task)
+bool rr_is_switch_to_user(struct task_struct *task, bool before)
 {
     unsigned long rip = KSTK_EIP(task);
 
-    if (rip != 0 && rip <= 0x00007fffffffffff) {
+    if (user_mode(task_pt_regs(task))) {
+        // rr_switch(rip);
+        if (before)
+            printk(KERN_INFO "before switch rip 0x%lx", rip);
+        else
+            printk(KERN_INFO "after switch rip 0x%lx", rip);
+
         return true;
     }
 
