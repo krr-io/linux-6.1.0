@@ -318,6 +318,7 @@ noinstr irqentry_state_t irqentry_enter(struct pt_regs *regs)
 	};
 
 	if (user_mode(regs)) {
+		rr_acquire_smp_exec(CTX_INTR);
 		irqentry_enter_from_user_mode(regs);
 		return ret;
 	}
@@ -410,6 +411,7 @@ noinstr void irqentry_exit(struct pt_regs *regs, irqentry_state_t state)
 	/* Check whether this returns to user mode */
 	if (user_mode(regs)) {
 		irqentry_exit_to_user_mode(regs);
+		rr_release_smp_exec(CTX_INTR);
 	} else if (!regs_irqs_disabled(regs)) {
 		/*
 		 * If RCU was not watching on entry this needs to be done

@@ -3,6 +3,7 @@
 #define _ASM_X86_KERNEL_RR_H
 #include <linux/types.h>
 #include <linux/kvm.h>
+#include <linux/sched.h>
 
 #define EVENT_TYPE_EXCEPTION 1
 #define EVENT_TYPE_SYSCALL   2
@@ -13,6 +14,13 @@
 #define EVENT_TYPE_RDSEED    10
 
 #define CFU_BUFFER_SIZE     4096
+
+#define CTX_SYSCALL 0
+#define CTX_INTR 1
+#define CTX_SWITCH 2
+#define CTX_IDLE 3
+#define CTX_LOCKWAIT 4
+
 
 typedef struct {
     unsigned long value;
@@ -78,6 +86,7 @@ typedef struct rr_event_guest_queue_header_t {
     unsigned int rr_enabled;
 } rr_event_guest_queue_header;
 
+void rr_record_rdseed(unsigned long val);
 rr_event_log_guest *rr_alloc_new_event_entry(void);
 bool rr_queue_inited(void);
 int rr_enabled(void);
@@ -86,6 +95,14 @@ void rr_record_gfu(unsigned long val);
 void rr_record_random(void *buf, int len);
 void rr_record_strnlen_user(unsigned long val);
 void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int n);
-void rr_record_rdseed(unsigned long val);
+
+
+void init_smp_exec_lock(void);
+void rr_acquire_smp_exec(int ctx);
+void rr_release_smp_exec(int ctx);
+bool rr_is_switch_to_user(struct task_struct *task, bool before);
+void rr_bug(int expected, int cur);
+void rr_switch(unsigned long next_rip);
+
 
 #endif /* _ASM_X86_KERNEL_RR_H */

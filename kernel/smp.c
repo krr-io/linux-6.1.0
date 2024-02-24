@@ -439,7 +439,9 @@ static void csd_lock_record(struct __call_single_data *csd)
 
 static __always_inline void csd_lock_wait(struct __call_single_data *csd)
 {
+	rr_release_smp_exec(CTX_LOCKWAIT);
 	smp_cond_load_acquire(&csd->node.u_flags, !(VAL & CSD_FLAG_LOCK));
+	rr_acquire_smp_exec(CTX_LOCKWAIT);
 }
 #endif
 

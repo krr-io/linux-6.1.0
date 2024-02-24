@@ -72,6 +72,7 @@ static __always_inline bool do_syscall_x32(struct pt_regs *regs, int nr)
 
 __visible noinstr void do_syscall_64(struct pt_regs *regs, int nr)
 {
+	rr_acquire_smp_exec(CTX_SYSCALL);
 	rr_record_syscall(regs);
 
 	add_random_kstack_offset();
@@ -86,6 +87,7 @@ __visible noinstr void do_syscall_64(struct pt_regs *regs, int nr)
 
 	instrumentation_end();
 	syscall_exit_to_user_mode(regs);
+	rr_release_smp_exec(CTX_SYSCALL);
 }
 #endif
 

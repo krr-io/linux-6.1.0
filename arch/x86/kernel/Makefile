@@ -69,6 +69,7 @@ obj-y			+= static_call.o
 obj-y				+= process.o
 obj-y				+= fpu/
 obj-y				+= ptrace.o
+obj-y               += rr_serialize.o
 obj-y				+= kernel_rr.o
 obj-y				+= kvm_ivshmem.o
 obj-$(CONFIG_X86_32)		+= tls.o
