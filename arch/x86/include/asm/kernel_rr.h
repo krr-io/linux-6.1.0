@@ -3,7 +3,6 @@
 #define _ASM_X86_KERNEL_RR_H
 #include <linux/types.h>
 #include <linux/kvm.h>
-#include <linux/sched.h>
 
 #define EVENT_TYPE_EXCEPTION 1
 #define EVENT_TYPE_SYSCALL   2
@@ -100,7 +99,7 @@ void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int
 void init_smp_exec_lock(void);
 void rr_acquire_smp_exec(int ctx);
 void rr_release_smp_exec(int ctx);
-bool rr_is_switch_to_user(struct task_struct *task, bool before);
+// bool rr_is_switch_to_user(struct task_struct *task, bool before);
 void rr_bug(int expected, int cur);
 void rr_switch(unsigned long next_rip);
 
