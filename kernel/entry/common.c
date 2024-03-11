@@ -318,7 +318,7 @@ noinstr irqentry_state_t irqentry_enter(struct pt_regs *regs)
 	};
 
 	if (user_mode(regs)) {
-		rr_acquire_smp_exec(CTX_INTR);
+		rr_handle_irqentry();
 		irqentry_enter_from_user_mode(regs);
 		return ret;
 	}
@@ -347,6 +347,7 @@ noinstr irqentry_state_t irqentry_enter(struct pt_regs *regs)
 	 * this part when enabled.
 	 */
 	if (!IS_ENABLED(CONFIG_TINY_RCU) && is_idle_task(current)) {
+		rr_handle_irqentry();
 		/*
 		 * If RCU is not watching then the same careful
 		 * sequence vs. lockdep and tracing is required

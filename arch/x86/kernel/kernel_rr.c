@@ -2,9 +2,9 @@
 #include <asm/traps.h>
 #include <linux/ptrace.h>
 
-__visible noinstr void rr_record_syscall(struct pt_regs *regs)
+
+static void rr_record_syscall(struct pt_regs *regs, int cpu_id, unsigned long spin_count)
 {
-    unsigned long flags;
     rr_event_log_guest *event;
 
     if (!rr_queue_inited()) {
@@ -15,14 +15,14 @@ __visible noinstr void rr_record_syscall(struct pt_regs *regs)
         return;
     }
 
-    local_irq_save(flags);
-
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
-        goto finish;
+        printk(KERN_ERR "Failed to allocate entry");
+        return;
     }
 
     event->type = EVENT_TYPE_SYSCALL;
+    event->id = cpu_id;
     event->event.syscall.regs.rax = regs->orig_ax;
     event->event.syscall.regs.rbx = regs->bx;
     event->event.syscall.regs.rcx = regs->cx;
@@ -40,15 +40,15 @@ __visible noinstr void rr_record_syscall(struct pt_regs *regs)
     event->event.syscall.regs.r14 = regs->r14;
     event->event.syscall.regs.r15 = regs->r15;
     event->event.syscall.cr3 = __read_cr3(); 
-
-finish:
-    local_irq_restore(flags);
+    event->event.syscall.spin_count = spin_count;
 }
 
-void rr_record_exception(struct pt_regs *regs, int vector, int error_code, unsigned long cr2)
+static void rr_record_exception(struct pt_regs *regs,
+                                int vector, int error_code,
+                                unsigned long cr2, int cpu_id,
+                                unsigned long spin_count)
 {
     rr_event_log_guest *event;
-    unsigned long flags;
 
     if (!rr_queue_inited()) {
         return;
@@ -58,14 +58,13 @@ void rr_record_exception(struct pt_regs *regs, int vector, int error_code, unsig
         return;
     }
 
-    local_irq_save(flags);
-
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
-        goto finish;
+        return;
     }
 
     event->type = EVENT_TYPE_EXCEPTION;
+    event->id = cpu_id;
     event->event.exception.exception_index = vector;
     event->event.exception.cr2 = cr2;
     event->event.exception.error_code = error_code;
@@ -85,8 +84,92 @@ void rr_record_exception(struct pt_regs *regs, int vector, int error_code, unsig
     event->event.exception.regs.r13 = regs->r13;
     event->event.exception.regs.r14 = regs->r14;
     event->event.exception.regs.r15 = regs->r15;
+    event->event.exception.spin_count = spin_count;
+}
+
+
+void rr_handle_syscall(struct pt_regs *regs)
+{
+    int cpu_id;
+    unsigned long flags, spin_count;
+
+    local_irq_save(flags);
+
+    preempt_disable();
+    cpu_id = smp_processor_id();
+
+    spin_count = rr_do_acquire_smp_exec(0, cpu_id);
+
+    rr_record_syscall(regs, cpu_id, spin_count);
+
+    preempt_enable();
+    local_irq_restore(flags);
+}
+
+
+void rr_handle_exception(struct pt_regs *regs, int vector, int error_code, unsigned long cr2)
+{
+    int cpu_id;
+    unsigned long flags, spin_count;
+
+    local_irq_save(flags);
+
+    preempt_disable();
+    cpu_id = smp_processor_id();
+
+    spin_count = rr_do_acquire_smp_exec(0, cpu_id);
+
+    rr_record_exception(regs, vector, error_code, cr2, cpu_id, spin_count);
+
+    preempt_enable();
+    local_irq_restore(flags);
+}
+
+
+static void rr_record_irqentry(int cpu_id, unsigned long spin_count)
+{
+    rr_event_log_guest *event;
+
+    if (!rr_queue_inited()) {
+        return;
+    }
+
+    if (!rr_enabled()) {
+        return;
+    }
+
+    event = rr_alloc_new_event_entry();
+    if (event == NULL) {
+        return;
+    }
+
+    event->type = EVENT_TYPE_INTERRUPT;
+    event->id = cpu_id;
+    event->event.interrupt.from = 3;
+    event->event.interrupt.spin_count = spin_count;
+}
+
+
+void rr_handle_irqentry(void)
+{
+    int cpu_id;
+    unsigned long flags;
+    long spin_count;
+
+    local_irq_save(flags);
+
+    preempt_disable();
+    cpu_id = smp_processor_id();
+
+    spin_count = rr_do_acquire_smp_exec(0, cpu_id);
+    if (spin_count < 0) {
+        goto finish;
+    }
+
+    rr_record_irqentry(cpu_id, spin_count);
 
 finish:
+    preempt_enable();
     local_irq_restore(flags);
 }
 
@@ -265,4 +348,25 @@ void rr_record_rdseed(unsigned long val)
 
 finish:
     local_irq_restore(flags);
+}
+
+void rr_record_release(int cpu_id)
+{
+    rr_event_log_guest *event;
+
+    if (!rr_queue_inited()) {
+        return;
+    }
+
+    if (!rr_enabled()) {
+        return;
+    }
+
+    event = rr_alloc_new_event_entry();
+    if (event == NULL) {
+        return;
+    }
+
+    event->type = EVENT_TYPE_RELEASE;
+    event->id = cpu_id;
 }

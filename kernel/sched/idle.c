@@ -188,7 +188,11 @@ static void cpuidle_idle_call(void)
 	if (cpuidle_not_available(drv, dev)) {
 		tick_nohz_idle_stop_tick();
 
+		rr_release_smp_exec(CTX_IDLE);
+
 		default_idle_call();
+
+		rr_acquire_smp_exec(CTX_IDLE, true);
 		goto exit_idle;
 	}
 
@@ -290,8 +294,6 @@ static void do_idle(void)
 		arch_cpu_idle_enter();
 		rcu_nocb_flush_deferred_wakeup();
 
-		rr_release_smp_exec(CTX_IDLE);
-
 		/*
 		 * In poll mode we reenable interrupts and spin. Also if we
 		 * detected in the wakeup from idle path that the tick
@@ -304,7 +306,6 @@ static void do_idle(void)
 		} else {
 			cpuidle_idle_call();
 		}
-		rr_acquire_smp_exec(CTX_IDLE);
 		arch_cpu_idle_exit();
 	}
 

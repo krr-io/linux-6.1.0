@@ -11,8 +11,8 @@
 #include <linux/sched/task_stack.h>
 
 
-static arch_spinlock_t exec_lock = __ARCH_SPIN_LOCK_UNLOCKED;
 static int initialized = 0;
+volatile unsigned long lock = 0;
 volatile int current_owner;
 
 static inline unsigned long long read_pmc(int counter)
@@ -27,94 +27,86 @@ static inline unsigned long long read_pmc(int counter)
     return ((unsigned long long)high << 32) | low;
 }
 
-void init_smp_exec_lock(void)
+long rr_do_acquire_smp_exec(int disable_irq, int cpu_id)
 {
-    printk(KERN_INFO "Initialized SMP exec lock");
-    // smp_wmb();
-    current_owner = -1;
-    initialized = 1;
-}
-
-void rr_acquire_smp_exec(int ctx)
-{
-    int cpu_id;
     unsigned long flags;
-    // unsigned long long counter;
-    // int cur;
+    unsigned long spin_count = 0;
 
     if (!initialized)
-        return;
+        return -1;
 
-    preempt_disable();
-    cpu_id = smp_processor_id();
-    // cur = current_owner;
-
-    // printk(KERN_INFO "%d acquiring, owner %d", cpu_id, cur);
     if (current_owner == cpu_id){
-        goto out;
+        return -1;
     }
 
     // During spining the exec lock, disable the interrupt,
     // because if we don't do it, there could be an interrupt
     // while spinning, and the interrupt entry will repeatitively
     // spin on this lock again.
-    local_irq_save(flags);
+    if (disable_irq)
+        local_irq_save(flags);
 
-    // wrmsrl(MSR_CORE_PERF_GLOBAL_CTRL, 0);
-    //if (!arch_spin_trylock(&exec_lock)){
-    arch_spin_lock(&exec_lock);
-    // counter = read_pmc(0x40000001);
-    //}
-
-    // read_pmc(4);
-    // wrmsrl(MSR_CORE_PERF_GLOBAL_CTRL, 0xc4);
+    while (test_and_set_bit(0, &lock)) {
+        spin_count++;
+    }
 
     current_owner = cpu_id;
 
-    local_irq_restore(flags);
+    if (disable_irq)
+        local_irq_restore(flags);
 
-out:
+    return spin_count;
+}
+
+void init_smp_exec_lock(void)
+{
+    printk(KERN_INFO "Initialized SMP exec lock");
+
+    current_owner = -1;
+    initialized = 1;
+}
+
+long rr_acquire_smp_exec(int ctx, int disable_irq)
+{
+    int cpu_id;
+    unsigned long spin_count;
+    // int cur;
+
+    if (!initialized)
+        return 0;
+
+    preempt_disable();
+    cpu_id = smp_processor_id();
+
+    spin_count = rr_do_acquire_smp_exec(disable_irq, cpu_id);
+
     preempt_enable();
+
+    return spin_count;
 }
 
 __maybe_unused void rr_bug(int expected, int cur) {
-    printk(KERN_ERR "expected %d actual owner %d", expected, cur);
 };
-
-void rr_switch(unsigned long next_rip) {
-     printk(KERN_INFO "switch rip 0x%lx", next_rip);
-}
 
 void rr_release_smp_exec(int ctx)
 {
-    // int cpu_id;
-    // int cur;
     unsigned long flags;
+    int cpu_id;
 
     if (!initialized)
         return;
 
     local_irq_save(flags);
 
+    preempt_disable();
+    cpu_id = smp_processor_id();
+
+    rr_record_release(cpu_id);
+
     current_owner = -1;
 
-    arch_spin_unlock(&exec_lock);
+    clear_bit(0, &lock);
+
+    preempt_enable();
     local_irq_restore(flags);
 }
-
-// bool rr_is_switch_to_user(struct task_struct *task, bool before)
-// {
-//     unsigned long rip = KSTK_EIP(task);
-
-//     if (user_mode(task_pt_regs(task))) {
-//         // rr_switch(rip);
-//         if (before)
-//             printk(KERN_INFO "before switch rip 0x%lx", rip);
-//         else
-//             printk(KERN_INFO "after switch rip 0x%lx", rip);
-
-//         return true;
-//     }
-
-//     return false;
-// }

@@ -47,6 +47,6 @@ void __noreturn handle_stack_overflow(struct pt_regs *regs,
 				      struct stack_info *info);
 #endif
 
-void rr_record_exception(struct pt_regs *regs, int vector, int error_code, unsigned long cr2);
+void rr_handle_exception(struct pt_regs *regs, int vector, int error_code, unsigned long cr2);
 
 #endif /* _ASM_X86_TRAPS_H */

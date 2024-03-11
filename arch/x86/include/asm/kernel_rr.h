@@ -4,6 +4,7 @@
 #include <linux/types.h>
 #include <linux/kvm.h>
 
+#define EVENT_TYPE_INTERRUPT 0
 #define EVENT_TYPE_EXCEPTION 1
 #define EVENT_TYPE_SYSCALL   2
 #define EVENT_TYPE_CFU       4
@@ -11,6 +12,7 @@
 #define EVENT_TYPE_GFU       8
 #define EVENT_TYPE_STRNLEN   9
 #define EVENT_TYPE_RDSEED    10
+#define EVENT_TYPE_RELEASE   11
 
 #define CFU_BUFFER_SIZE     4096
 
@@ -19,6 +21,7 @@
 #define CTX_SWITCH 2
 #define CTX_IDLE 3
 #define CTX_LOCKWAIT 4
+#define CTX_EXCP    5
 
 
 typedef struct {
@@ -28,6 +31,8 @@ typedef struct {
 typedef struct {
     int vector;
     unsigned long ecx;
+    int from;
+    unsigned long spin_count;
 } rr_interrupt;
 
 typedef struct {
@@ -47,11 +52,13 @@ typedef struct {
     int error_code;
     unsigned long cr2;
     struct kvm_regs regs;
+    unsigned long spin_count;
 } rr_exception;
 
 typedef struct {
     struct kvm_regs regs;
     unsigned long kernel_gsbase, msr_gsbase, cr3;
+    unsigned long spin_count;
 } rr_syscall;
 
 typedef struct {
@@ -94,14 +101,16 @@ void rr_record_gfu(unsigned long val);
 void rr_record_random(void *buf, int len);
 void rr_record_strnlen_user(unsigned long val);
 void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int n);
+void rr_record_release(int cpu_id);
 
 
 void init_smp_exec_lock(void);
-void rr_acquire_smp_exec(int ctx);
+long rr_acquire_smp_exec(int ctx, int disable_irq);
 void rr_release_smp_exec(int ctx);
+long rr_do_acquire_smp_exec(int disable_irq, int cpu_id);
+void rr_handle_irqentry(void);
 // bool rr_is_switch_to_user(struct task_struct *task, bool before);
 void rr_bug(int expected, int cur);
-void rr_switch(unsigned long next_rip);
 
 
 #endif /* _ASM_X86_KERNEL_RR_H */

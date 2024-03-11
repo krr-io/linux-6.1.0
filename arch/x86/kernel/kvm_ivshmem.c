@@ -506,6 +506,11 @@ static void rr_init_queue(void)
 	header.current_pos = 0;
     header.total_pos = (kvm_ivshmem_dev.ioaddr_size - header.header_size) / header.entry_size;
 
+	if (header.entry_size < sizeof(rr_event_log_guest)) {
+		panic("Entry size %u is smaller than required log size %ld",
+			  header.entry_size, sizeof(rr_event_log_guest));
+	}
+
     printk(KERN_INFO "Initialized RR shared memory, "
           "header size=%d, current pos=%d, total_pos=%d\n", 
           header.header_size, header.current_pos, header.total_pos);
