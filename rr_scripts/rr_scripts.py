@@ -14,12 +14,9 @@ t = gdb.lookup_type('long').pointer()
 class DebugPrintingBreakpoint(gdb.Breakpoint):
     def stop(self):
         with open(TRACE_FILE, 'a+') as f:
-            v1 = gdb.parse_and_eval("((struct ata_host *)dev_instance)->ports[0]->hsm_task_state")
-            v2= gdb.parse_and_eval("((struct ata_host *)dev_instance)->ports[0]->link.active_tag")
-
-            b1 = gdb.parse_and_eval("((struct ata_host *)dev_instance)->ports[1]->hsm_task_state")
-            b2= gdb.parse_and_eval("((struct ata_host *)dev_instance)->ports[1]->link.active_tag")
-            f.write("0: {}, {} 1: {}, {}\n".format(v1, v2, b1, b2))
+            thread = gdb.execute("thread", to_string=True)
+            bt = gdb.execute("bt", to_string=True)
+            f.write("{}{}\n\n".format(thread, bt))
         return False
 
 try:
@@ -28,7 +25,14 @@ except Exception as e:
     print("Failed to remove: {}".format(str(e)))
 
 
-debug1 = DebugPrintingBreakpoint("__ata_sff_interrupt")
-# debug2 = DebugPrintingBreakpoint("drivers/ata/libata-sff.c:1597")
+debug1 = DebugPrintingBreakpoint("*0xffffffff816ca18b")
+debug2 = DebugPrintingBreakpoint("*0xffffffff81034f0b")
+# debug3 = DebugPrintingBreakpoint("*0xffffffff810351cf") 0xffffffff81891e70
+debug4 = DebugPrintingBreakpoint("irqentry_exit")
+debug5 = DebugPrintingBreakpoint("irqentry_enter")
+debug6 = DebugPrintingBreakpoint("ct_irq_exit")
+debug7 = DebugPrintingBreakpoint("*0xffffffff81a00ecb")
+debug8 = DebugPrintingBreakpoint("*0xffffffff81891e70")
+
 
 gdb.execute("continue")

@@ -466,6 +466,14 @@ rr_event_log_guest *rr_alloc_new_event_entry(void)
     return entry;
 }
 
+void rr_set_lock_owner(int owner)
+{
+	if (!rr_queue_inited())
+		return;
+
+	atomic_set(kvm_ivshmem_dev.base_addr + sizeof(rr_event_guest_queue_header), owner);
+}
+
 void rr_append_to_queue(rr_event_log_guest *event_log)
 {
     rr_event_guest_queue_header *header;

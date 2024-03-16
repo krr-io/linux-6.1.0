@@ -106,7 +106,11 @@ void __cpuidle default_idle_call(void)
 		ct_idle_enter();
 		lockdep_hardirqs_on(_THIS_IP_);
 
+		rr_release_smp_exec(CTX_IDLE);
+
 		arch_cpu_idle();
+
+		rr_acquire_smp_exec(CTX_IDLE, true);
 
 		/*
 		 * OK, so IRQs are enabled here, but RCU needs them disabled to
@@ -188,11 +192,8 @@ static void cpuidle_idle_call(void)
 	if (cpuidle_not_available(drv, dev)) {
 		tick_nohz_idle_stop_tick();
 
-		rr_release_smp_exec(CTX_IDLE);
-
 		default_idle_call();
 
-		rr_acquire_smp_exec(CTX_IDLE, true);
 		goto exit_idle;
 	}
 

@@ -51,6 +51,7 @@ long rr_do_acquire_smp_exec(int disable_irq, int cpu_id)
     }
 
     current_owner = cpu_id;
+    rr_set_lock_owner(cpu_id);
 
     if (disable_irq)
         local_irq_restore(flags);
@@ -104,6 +105,7 @@ void rr_release_smp_exec(int ctx)
     rr_record_release(cpu_id);
 
     current_owner = -1;
+    rr_set_lock_owner(-1);
 
     clear_bit(0, &lock);
 

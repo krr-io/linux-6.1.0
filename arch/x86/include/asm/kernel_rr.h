@@ -111,6 +111,7 @@ long rr_do_acquire_smp_exec(int disable_irq, int cpu_id);
 void rr_handle_irqentry(void);
 // bool rr_is_switch_to_user(struct task_struct *task, bool before);
 void rr_bug(int expected, int cur);
+void rr_set_lock_owner(int owner);
 
 
 #endif /* _ASM_X86_KERNEL_RR_H */
