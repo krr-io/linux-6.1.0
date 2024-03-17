@@ -27,7 +27,7 @@ static inline unsigned long long read_pmc(int counter)
     return ((unsigned long long)high << 32) | low;
 }
 
-long rr_do_acquire_smp_exec(int disable_irq, int cpu_id)
+long rr_do_acquire_smp_exec(int disable_irq, int cpu_id, int ctx)
 {
     unsigned long flags;
     unsigned long spin_count = 0;
@@ -52,6 +52,9 @@ long rr_do_acquire_smp_exec(int disable_irq, int cpu_id)
 
     current_owner = cpu_id;
     rr_set_lock_owner(cpu_id);
+
+    if (unlikely(ctx == CTX_LOCKWAIT))
+        kvm_hypercall0(KVM_INSTRUCTION_SYNC);
 
     if (disable_irq)
         local_irq_restore(flags);
@@ -79,7 +82,7 @@ long rr_acquire_smp_exec(int ctx, int disable_irq)
     preempt_disable();
     cpu_id = smp_processor_id();
 
-    spin_count = rr_do_acquire_smp_exec(disable_irq, cpu_id);
+    spin_count = rr_do_acquire_smp_exec(disable_irq, cpu_id, ctx);
 
     preempt_enable();
 

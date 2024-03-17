@@ -107,7 +107,7 @@ void rr_record_release(int cpu_id);
 void init_smp_exec_lock(void);
 long rr_acquire_smp_exec(int ctx, int disable_irq);
 void rr_release_smp_exec(int ctx);
-long rr_do_acquire_smp_exec(int disable_irq, int cpu_id);
+long rr_do_acquire_smp_exec(int disable_irq, int cpu_id, int ctx);
 void rr_handle_irqentry(void);
 // bool rr_is_switch_to_user(struct task_struct *task, bool before);
 void rr_bug(int expected, int cur);

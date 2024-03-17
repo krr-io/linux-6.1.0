@@ -13,26 +13,24 @@ t = gdb.lookup_type('long').pointer()
 
 class DebugPrintingBreakpoint(gdb.Breakpoint):
     def stop(self):
-        with open(TRACE_FILE, 'a+') as f:
-            thread = gdb.execute("thread", to_string=True)
-            bt = gdb.execute("bt", to_string=True)
-            f.write("{}{}\n\n".format(thread, bt))
         return False
 
-try:
-    os.remove(TRACE_FILE)
-except Exception as e:
-    print("Failed to remove: {}".format(str(e)))
+# try:
+#     os.remove(TRACE_FILE)
+# except Exception as e:
+#     print("Failed to remove: {}".format(str(e)))
 
 
-debug1 = DebugPrintingBreakpoint("*0xffffffff816ca18b")
-debug2 = DebugPrintingBreakpoint("*0xffffffff81034f0b")
-# debug3 = DebugPrintingBreakpoint("*0xffffffff810351cf") 0xffffffff81891e70
-debug4 = DebugPrintingBreakpoint("irqentry_exit")
-debug5 = DebugPrintingBreakpoint("irqentry_enter")
-debug6 = DebugPrintingBreakpoint("ct_irq_exit")
-debug7 = DebugPrintingBreakpoint("*0xffffffff81a00ecb")
-debug8 = DebugPrintingBreakpoint("*0xffffffff81891e70")
+debug1 = DebugPrintingBreakpoint("*0xffffffff81a00000")
+debug2 = DebugPrintingBreakpoint("*0xffffffff81888560")
+# debug3 = DebugPrintingBreakpoint("*0xffffffff81035200")
+# debug4 = DebugPrintingBreakpoint("*0xffffffff8103522f")
+# debug5 = DebugPrintingBreakpoint("*0xffffffff81034f7f")
+# debug6 = DebugPrintingBreakpoint("*0xffffffff81034f50")
+# debug7 = DebugPrintingBreakpoint("*0xffffffff81a00b40")
+# debug8 = DebugPrintingBreakpoint("*0xffffffff81887e90")
+
+
 
 
 gdb.execute("continue")

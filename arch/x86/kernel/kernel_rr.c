@@ -91,14 +91,18 @@ static void rr_record_exception(struct pt_regs *regs,
 void rr_handle_syscall(struct pt_regs *regs)
 {
     int cpu_id;
-    unsigned long flags, spin_count;
+    unsigned long flags;
+    long spin_count;
 
     local_irq_save(flags);
 
     preempt_disable();
     cpu_id = smp_processor_id();
 
-    spin_count = rr_do_acquire_smp_exec(0, cpu_id);
+    spin_count = rr_do_acquire_smp_exec(0, cpu_id, CTX_SYSCALL);
+
+    if (spin_count < 0)
+        spin_count = 0;
 
     rr_record_syscall(regs, cpu_id, spin_count);
 
@@ -110,14 +114,18 @@ void rr_handle_syscall(struct pt_regs *regs)
 void rr_handle_exception(struct pt_regs *regs, int vector, int error_code, unsigned long cr2)
 {
     int cpu_id;
-    unsigned long flags, spin_count;
+    unsigned long flags;
+    long spin_count;
 
     local_irq_save(flags);
 
     preempt_disable();
     cpu_id = smp_processor_id();
 
-    spin_count = rr_do_acquire_smp_exec(0, cpu_id);
+    spin_count = rr_do_acquire_smp_exec(0, cpu_id, CTX_EXCP);
+
+    if (spin_count < 0)
+        spin_count = 0;
 
     rr_record_exception(regs, vector, error_code, cr2, cpu_id, spin_count);
 
@@ -161,7 +169,7 @@ void rr_handle_irqentry(void)
     preempt_disable();
     cpu_id = smp_processor_id();
 
-    spin_count = rr_do_acquire_smp_exec(0, cpu_id);
+    spin_count = rr_do_acquire_smp_exec(0, cpu_id, CTX_INTR);
     if (spin_count < 0) {
         goto finish;
     }
