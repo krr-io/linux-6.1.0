@@ -23,8 +23,8 @@ class DebugPrintingBreakpoint(gdb.Breakpoint):
 
 debug1 = DebugPrintingBreakpoint("*0xffffffff81a00000")
 debug2 = DebugPrintingBreakpoint("*0xffffffff81888560")
-# debug3 = DebugPrintingBreakpoint("*0xffffffff81035200")
-# debug4 = DebugPrintingBreakpoint("*0xffffffff8103522f")
+# debug3 = DebugPrintingBreakpoint("*0xffffffff81888600")
+# debug4 = DebugPrintingBreakpoint("*0xffffffff81888690")
 # debug5 = DebugPrintingBreakpoint("*0xffffffff81034f7f")
 # debug6 = DebugPrintingBreakpoint("*0xffffffff81034f50")
 # debug7 = DebugPrintingBreakpoint("*0xffffffff81a00b40")
