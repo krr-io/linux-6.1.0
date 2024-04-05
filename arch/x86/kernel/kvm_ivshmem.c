@@ -445,23 +445,31 @@ rr_event_log_guest* rr_get_tail_event(void)
     return event;    
 }
 
-rr_event_log_guest *rr_alloc_new_event_entry(void)
+void *rr_alloc_new_event_entry(unsigned long size, int type)
 {
     rr_event_guest_queue_header *header;
     rr_event_log_guest *entry;
+	rr_event_entry_header *entry_header;
+	unsigned long offset;
+	unsigned long event_size = size + sizeof(rr_event_entry_header);
 
     header = (rr_event_guest_queue_header *)kvm_ivshmem_dev.base_addr;
 
-    if (header->current_pos >= header->total_pos - 1) {
-        printk(KERN_ERR "RR queue is full, drop from start\n");
-		header->current_pos = 0;
+    if (header->current_byte + event_size > header->total_size) {
+        printk(KERN_ERR "RR queue is full\n");
+        return NULL;
     }
 
-    entry = (rr_event_log_guest *)(kvm_ivshmem_dev.base_addr + \
-             header->header_size + header->current_pos * header->entry_size);
-    entry->id = header->current_pos;
+	offset = (unsigned long)kvm_ivshmem_dev.base_addr + header->current_byte;
+
+	entry_header = (rr_event_entry_header *)offset;
+
+	entry_header->type = type;
+
+    entry = (void *)(offset + sizeof(rr_event_entry_header));
 
     header->current_pos++;
+	header->current_byte += event_size;
 
     return entry;
 }
@@ -506,7 +514,6 @@ static void rr_init_queue(void)
         .rr_enabled = 0,
     };
     rr_event_log_guest *event;
-	int i;
 	unsigned long size;
 
     event = kmalloc(sizeof(rr_event_log_guest), GFP_KERNEL);
@@ -515,6 +522,7 @@ static void rr_init_queue(void)
 	header.current_pos = 0;
 	size = kvm_ivshmem_dev.ioaddr_size - header.header_size;
     header.total_pos = size / header.entry_size;
+	header.total_size = size;
 
 	if (header.entry_size < sizeof(rr_event_log_guest)) {
 		panic("Entry size %u is smaller than required log size %ld",
@@ -528,9 +536,11 @@ static void rr_init_queue(void)
     memcpy(kvm_ivshmem_dev.base_addr, &header, sizeof(rr_event_guest_queue_header));
 
 	// Warmup to touch shared memory
-	for (i=0; i < header.total_pos; i++) {
-		rr_alloc_new_event_entry();
+	while(rr_alloc_new_event_entry(header.entry_size, 0)!=NULL) {
+		break;
 	}
+
+	header.current_byte = header.header_size;
 
 	memcpy(kvm_ivshmem_dev.base_addr, &header, sizeof(rr_event_guest_queue_header));
 

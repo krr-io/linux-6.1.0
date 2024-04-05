@@ -25,21 +25,29 @@
 
 
 typedef struct {
+    int id;
     unsigned long value;
+    unsigned long inst_cnt;
+    unsigned long rip;
 } rr_io_input;
 
 typedef struct {
+    int id;
     int vector;
     unsigned long ecx;
     int from;
     unsigned long spin_count;
+    unsigned long inst_cnt;
+    unsigned long rip;
 } rr_interrupt;
 
 typedef struct {
+    int id;
     unsigned long val;
 } rr_gfu;
 
 typedef struct {
+    int id;
     unsigned long src_addr;
     unsigned long dest_addr;
     unsigned long len;
@@ -48,6 +56,7 @@ typedef struct {
 } rr_cfu;
 
 typedef struct {
+    int id;
     int exception_index;
     int error_code;
     unsigned long cr2;
@@ -56,12 +65,14 @@ typedef struct {
 } rr_exception;
 
 typedef struct {
+    int id;
     struct kvm_regs regs;
     unsigned long kernel_gsbase, msr_gsbase, cr3;
     unsigned long spin_count;
 } rr_syscall;
 
 typedef struct {
+    int id;
     unsigned long buf;
     unsigned long len;
     __u8 data[1024];
@@ -90,10 +101,16 @@ typedef struct rr_event_guest_queue_header_t {
     unsigned int header_size;
     unsigned int entry_size;
     unsigned int rr_enabled;
+    unsigned long current_byte;
+    unsigned long total_size;
 } rr_event_guest_queue_header;
 
+typedef struct rr_event_entry_header_t {
+    int type;
+} rr_event_entry_header;
+
 void rr_record_rdseed(unsigned long val);
-rr_event_log_guest *rr_alloc_new_event_entry(void);
+void *rr_alloc_new_event_entry(unsigned long size, int type);
 bool rr_queue_inited(void);
 int rr_enabled(void);
 void *rr_record_cfu(const void __user *from, void *to, long unsigned int n);
