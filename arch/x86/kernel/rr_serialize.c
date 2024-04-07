@@ -13,7 +13,7 @@
 
 static int initialized = 0;
 volatile unsigned long lock = 0;
-volatile int current_owner;
+static atomic_t current_owner;
 
 static inline unsigned long long read_pmc(int counter)
 {
@@ -35,10 +35,6 @@ long rr_do_acquire_smp_exec(int disable_irq, int cpu_id, int ctx)
     if (!initialized)
         return -1;
 
-    if (current_owner == cpu_id){
-        return -1;
-    }
-
     // During spining the exec lock, disable the interrupt,
     // because if we don't do it, there could be an interrupt
     // while spinning, and the interrupt entry will repeatitively
@@ -46,16 +42,22 @@ long rr_do_acquire_smp_exec(int disable_irq, int cpu_id, int ctx)
     if (disable_irq)
         local_irq_save(flags);
 
+    if (atomic_read(&current_owner) == cpu_id){
+        spin_count = -1;
+        goto finish;
+    }
+
     while (test_and_set_bit(0, &lock)) {
         spin_count++;
     }
 
-    current_owner = cpu_id;
+    atomic_set(&current_owner, cpu_id);
     rr_set_lock_owner(cpu_id);
 
     if (unlikely(ctx == CTX_LOCKWAIT))
         kvm_hypercall0(KVM_INSTRUCTION_SYNC);
 
+finish:
     if (disable_irq)
         local_irq_restore(flags);
 
@@ -66,7 +68,7 @@ void init_smp_exec_lock(void)
 {
     printk(KERN_INFO "Initialized SMP exec lock");
 
-    current_owner = -1;
+    atomic_set(&current_owner, -1);
     initialized = 1;
 }
 
@@ -107,7 +109,7 @@ void rr_release_smp_exec(int ctx)
 
     // rr_record_release(cpu_id);
 
-    current_owner = -1;
+    atomic_set(&current_owner, -1);
     rr_set_lock_owner(-1);
 
     clear_bit(0, &lock);
