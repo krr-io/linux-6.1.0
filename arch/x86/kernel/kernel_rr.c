@@ -17,6 +17,7 @@ static void rr_record_syscall(struct pt_regs *regs, int cpu_id, unsigned long sp
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         printk(KERN_ERR "Failed to allocate entry");
         return;
     }
@@ -60,6 +61,7 @@ static void rr_record_exception(struct pt_regs *regs,
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         return;
     }
 
@@ -148,6 +150,7 @@ static void rr_record_irqentry(int cpu_id, unsigned long spin_count)
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         return;
     }
 
@@ -198,6 +201,7 @@ void rr_record_random(void *buf, int len)
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         goto finish;
         return;
     }
@@ -233,6 +237,7 @@ void rr_record_cfu(const void __user *from, void *to, long unsigned int n)
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         goto finish;
     }
 
@@ -263,6 +268,7 @@ void rr_record_gfu(unsigned long val)
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         goto finish;
     }
 
@@ -318,6 +324,7 @@ void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         goto finish;
     }
 
@@ -348,6 +355,7 @@ void rr_record_rdseed(unsigned long val)
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         goto finish;
     }
 
@@ -372,6 +380,7 @@ void rr_record_release(int cpu_id)
 
     event = rr_alloc_new_event_entry();
     if (event == NULL) {
+        panic("Failed to allocate");
         return;
     }
 
