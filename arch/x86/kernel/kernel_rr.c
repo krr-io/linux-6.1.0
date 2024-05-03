@@ -215,18 +215,18 @@ finish:
     local_irq_restore(flags);
 }
 
-void rr_record_cfu(const void __user *from, void *to, long unsigned int n)
+void *rr_record_cfu(const void __user *from, void *to, long unsigned int n)
 {
     unsigned long flags;
     long ret;
     rr_event_log_guest *event;
 
     if (!rr_queue_inited()) {
-        return;
+        return NULL;
     }
 
     if (!rr_enabled()) {
-        return;
+        return NULL;
     }
 
     if (n > CFU_BUFFER_SIZE) {
@@ -249,6 +249,8 @@ void rr_record_cfu(const void __user *from, void *to, long unsigned int n)
 
 finish:
     local_irq_restore(flags);
+
+    return (void *)event->event.cfu.data;
 }
 
 void rr_record_gfu(unsigned long val)
