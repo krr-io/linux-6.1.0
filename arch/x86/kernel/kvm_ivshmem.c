@@ -457,6 +457,7 @@ void *rr_alloc_new_event_entry(unsigned long size, int type)
 
     if (header->current_byte + event_size >= header->total_size) {
         printk(KERN_ERR "RR queue is full, start over\n");
+		header->rotated_bytes += header->current_byte;
         header->current_byte = header->header_size;
 		header->current_pos = 0;
     }
@@ -527,6 +528,7 @@ static void rr_init_queue(void)
         .header_size = PAGE_SIZE,
         .entry_size = 2 * PAGE_SIZE,
         .rr_enabled = 0,
+		.rotated_bytes = 0,
     };
     rr_event_log_guest *event;
 	unsigned long size;
