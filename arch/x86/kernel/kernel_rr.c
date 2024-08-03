@@ -277,7 +277,7 @@ finish:
 }
 
 
-void rr_record_strnlen_user(unsigned long val)
+void rr_record_strnlen_user(unsigned long val, unsigned long src)
 {
     unsigned long flags;
     void *event;
@@ -302,6 +302,7 @@ void rr_record_strnlen_user(unsigned long val)
 
     cfu->id = 0;
     cfu->len = val;
+    cfu->src_addr = src;
 
 finish:
     local_irq_restore(flags);
