@@ -1,3 +1,4 @@
+#include <asm/pgtable_64_types.h>
 #include <asm/kernel_rr.h>
 #include <asm/traps.h>
 #include <linux/ptrace.h>
@@ -249,6 +250,109 @@ finish:
     return addr;
 }
 
+
+void *rr_gfu_begin(unsigned long ptr, int size, int align)
+{
+    unsigned long flags;
+    void *event;
+    rr_gfu *gfu;
+
+    if (!rr_queue_inited()) {
+        return NULL;
+    }
+
+    if (!rr_enabled()) {
+        return NULL;
+    }
+
+    local_irq_save(flags);
+
+    event = rr_alloc_new_event_entry(sizeof(rr_gfu), EVENT_TYPE_GFU);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+
+    gfu = (rr_gfu *)event;
+
+    gfu->id = 0;
+    gfu->ptr = ptr;
+    gfu->size = size;
+
+    local_irq_restore(flags);
+
+    return event;
+}
+
+void *rr_cfu_begin(const void __user *from, void *to, long unsigned int n)
+{
+    unsigned long flags;
+    void *event;
+    rr_cfu *cfu = NULL;
+    unsigned long len;
+    void *addr;
+
+    if (!rr_queue_inited()) {
+        return NULL;
+    }
+
+    if (!rr_enabled()) {
+        return NULL;
+    }
+
+    local_irq_save(flags);
+
+    len = sizeof(rr_cfu) + (n + 1) * sizeof(unsigned char);
+    event = rr_alloc_new_event_entry(len, EVENT_TYPE_CFU);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+
+    cfu = (rr_cfu *)event;
+
+    cfu->id = 0;
+    cfu->src_addr = (unsigned long)from;
+    cfu->dest_addr = (unsigned long)to;
+    cfu->len = n + 1;
+    cfu->data = NULL;
+    addr = (void *)((unsigned long)cfu + sizeof(rr_cfu));
+
+    local_irq_restore(flags);
+
+    return addr;
+}
+
+void rr_cfu_end(void *addr, void *to, long unsigned int n)
+{
+    unsigned long flags;
+
+    if (!rr_queue_inited()) {
+        return;
+    }
+
+    if (!rr_enabled()) {
+        return;
+    }
+
+    if (!addr) {
+        return;
+    }
+
+    local_irq_save(flags);
+    memcpy(addr, to, n);
+    local_irq_restore(flags);
+}
+
+void rr_record_gfu_end(unsigned long val, void *event)
+{
+    rr_gfu *gfu;
+
+    if (!event)
+        return;
+
+    gfu = (rr_gfu *)event;
+    gfu->val = val;
+}
+
 void rr_record_gfu(unsigned long val, unsigned long ptr)
 {
     unsigned long flags;
@@ -408,3 +512,119 @@ void rr_record_release(int cpu_id)
 
 void rr_begin_cfu(const void __user *from, void *to, long unsigned int n)
 { return; }
+
+unsigned long rr_record_pte_clear(pte_t *xp)
+{
+    unsigned long flags;
+    void *event;
+    rr_gfu *gfu = NULL;
+
+    pteval_t p = xchg(&xp->pte, 0);
+
+    if (!rr_queue_inited()) {
+        return p;
+    }
+
+    if (!rr_enabled()) {
+        return p;
+    }
+
+    if (!(p & _PAGE_USER)) {
+        return p;
+    }
+
+    local_irq_save(flags);
+
+    event = rr_alloc_new_event_entry(sizeof(rr_gfu), EVENT_TYPE_PTE);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+
+    gfu = (rr_gfu *)event;
+
+    gfu->id = 0;
+    gfu->ptr = (unsigned long)xp;
+    gfu->val = p;
+
+    local_irq_restore(flags);
+
+    return p;
+}
+
+pte_t rr_read_pte(pte_t *pte)
+{
+    pte_t rr_pte;
+    unsigned long flags;
+    void *event;
+    rr_gfu *gfu;
+
+    rr_pte = *pte;
+
+    if (!rr_queue_inited()) {
+        return rr_pte;
+    }
+
+    if (!rr_enabled()) {
+        return rr_pte;
+    }
+
+    if (!(rr_pte.pte & _PAGE_USER)) {
+        return rr_pte;
+    }
+
+    local_irq_save(flags);
+
+    event = rr_alloc_new_event_entry(sizeof(rr_gfu), EVENT_TYPE_PTE);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+
+    gfu = (rr_gfu *)event;
+
+    gfu->id = 0;
+    gfu->ptr = (unsigned long)pte;
+    gfu->val = rr_pte.pte;
+
+    local_irq_restore(flags);
+
+    return rr_pte;
+}
+
+pte_t rr_read_pte_once(pte_t *pte)
+{
+    pte_t rr_pte;
+    unsigned long flags;
+    void *event;
+    rr_gfu *gfu;
+
+    rr_pte = READ_ONCE(*pte);
+
+    if (!rr_queue_inited()) {
+        return rr_pte;
+    }
+
+    if (!rr_enabled()) {
+        return rr_pte;
+    }
+
+    if (!(rr_pte.pte & _PAGE_USER)) {
+        return rr_pte;
+    }
+
+    local_irq_save(flags);
+
+    event = rr_alloc_new_event_entry(sizeof(rr_gfu), EVENT_TYPE_PTE);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+
+    gfu = (rr_gfu *)event;
+
+    gfu->id = 0;
+    gfu->ptr = (unsigned long)pte;
+    gfu->val = rr_pte.pte;
+
+    local_irq_restore(flags);
+
+    return rr_pte;
+}

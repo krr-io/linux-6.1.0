@@ -13,6 +13,7 @@
 #define EVENT_TYPE_STRNLEN   9
 #define EVENT_TYPE_RDSEED    10
 #define EVENT_TYPE_RELEASE   11
+#define EVENT_TYPE_PTE       14
 
 #define CFU_BUFFER_SIZE     4096
 
@@ -39,12 +40,14 @@ typedef struct {
     unsigned long spin_count;
     unsigned long inst_cnt;
     unsigned long rip;
+    struct kvm_regs regs;
 } rr_interrupt;
 
 typedef struct {
     int id;
     unsigned long val;
     unsigned long ptr;
+    int size;
 } rr_gfu;
 
 typedef struct {
@@ -122,7 +125,6 @@ void rr_record_strnlen_user(unsigned long val, unsigned long src);
 void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int n);
 void rr_record_release(int cpu_id);
 
-
 void init_smp_exec_lock(void);
 long rr_acquire_smp_exec(int ctx, int disable_irq);
 void rr_release_smp_exec(int ctx);
@@ -132,5 +134,14 @@ void rr_handle_irqentry(void);
 void rr_bug(int expected, int cur);
 void rr_set_lock_owner(int owner);
 void rr_begin_cfu(const void __user *from, void *to, long unsigned int n);
+void *rr_gfu_begin(unsigned long ptr, int size, int align);
+void rr_record_gfu_end(unsigned long val, void *event);
+void *rr_cfu_begin(const void __user *from, void *to, long unsigned int n);
+void rr_cfu_end(void *addr, void *to, long unsigned int n);
+void *rr_record_pte_begin(unsigned long ptr);
+void inline rr_record_pte_end(void *event, unsigned long pte_val);
+unsigned long rr_record_pte_clear(pte_t *xp);
+pte_t rr_read_pte(pte_t *pte);
+pte_t rr_read_pte_once(pte_t *pte);
 
 #endif /* _ASM_X86_KERNEL_RR_H */
