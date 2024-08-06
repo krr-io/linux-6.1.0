@@ -11,6 +11,7 @@
 #define EVENT_TYPE_GFU       8
 #define EVENT_TYPE_STRNLEN   9
 #define EVENT_TYPE_RDSEED    10
+#define EVENT_TYPE_PTE       14
 
 #define CFU_BUFFER_SIZE     4096
 
@@ -34,6 +35,8 @@ typedef struct {
 typedef struct {
     int id;
     unsigned long val;
+    unsigned long ptr;
+    int size;
 } rr_gfu;
 
 typedef struct {
@@ -105,10 +108,20 @@ void *rr_alloc_new_event_entry(unsigned long size, int type);
 bool rr_queue_inited(void);
 int rr_enabled(void);
 void *rr_record_cfu(const void __user *from, void *to, long unsigned int n);
-void rr_record_gfu(unsigned long val);
+void rr_record_gfu(unsigned long val, unsigned long ptr);
 void rr_record_random(void *buf, int len);
 void rr_record_strnlen_user(unsigned long val, unsigned long src);
 void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int n);
 void rr_record_rdseed(unsigned long val);
+void rr_begin_cfu(const void __user *from, void *to, long unsigned int n);
+void *rr_gfu_begin(unsigned long ptr, int size, int align);
+void rr_record_gfu_end(unsigned long val, void *event);
+void *rr_cfu_begin(const void __user *from, void *to, long unsigned int n);
+void rr_cfu_end(void *addr, void *to, long unsigned int n);
+void *rr_record_pte_begin(unsigned long ptr);
+void inline rr_record_pte_end(void *event, unsigned long pte_val);
+unsigned long rr_record_pte_clear(pte_t *xp);
+pte_t rr_read_pte(pte_t *pte);
+pte_t rr_read_pte_once(pte_t *pte);
 
 #endif /* _ASM_X86_KERNEL_RR_H */

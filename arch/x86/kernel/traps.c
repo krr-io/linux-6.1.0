@@ -731,6 +731,8 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
 	enum kernel_gp_hint hint = GP_NO_HINT;
 	unsigned long gp_addr;
 
+	rr_record_exception(regs, GP_VECTOR, error_code, 0);
+
 	if (user_mode(regs) && try_fixup_enqcmd_gp())
 		return;
 
@@ -818,6 +820,11 @@ static void do_int3_user(struct pt_regs *regs)
 
 DEFINE_IDTENTRY_RAW(exc_int3)
 {
+
+	if (user_mode(regs)) {
+		rr_record_exception(regs, BP_VECTOR, 0, 0);
+	}
+
 	/*
 	 * poke_int3_handler() is completely self contained code; it does (and
 	 * must) *NOT* call out to anything, lest it hits upon yet another
@@ -1177,7 +1184,10 @@ DEFINE_IDTENTRY_DEBUG(exc_debug)
 /* User entry, runs on regular task stack */
 DEFINE_IDTENTRY_DEBUG_USER(exc_debug)
 {
-	exc_debug_user(regs, debug_read_clear_dr6());
+	unsigned long dr6 = debug_read_clear_dr6();
+
+	rr_record_exception(regs, DB_VECTOR, 0, dr6);
+	exc_debug_user(regs, dr6);
 }
 #else
 /* 32 bit does not have separate entry points. */
@@ -1185,9 +1195,10 @@ DEFINE_IDTENTRY_RAW(exc_debug)
 {
 	unsigned long dr6 = debug_read_clear_dr6();
 
-	if (user_mode(regs))
+	if (user_mode(regs)) {
+		rr_record_exception(regs, DB_VECTOR, 0, dr6);
 		exc_debug_user(regs, dr6);
-	else
+	} else
 		exc_debug_kernel(regs, dr6);
 }
 #endif

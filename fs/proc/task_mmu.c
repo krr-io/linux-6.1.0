@@ -531,13 +531,14 @@ static void smaps_pte_entry(pte_t *pte, unsigned long addr,
 	bool locked = !!(vma->vm_flags & VM_LOCKED);
 	struct page *page = NULL;
 	bool migration = false, young = false, dirty = false;
+	pte_t pte_val = rr_read_pte(pte);
 
-	if (pte_present(*pte)) {
-		page = vm_normal_page(vma, addr, *pte);
-		young = pte_young(*pte);
-		dirty = pte_dirty(*pte);
-	} else if (is_swap_pte(*pte)) {
-		swp_entry_t swpent = pte_to_swp_entry(*pte);
+	if (pte_present(pte_val)) {
+		page = vm_normal_page(vma, addr, pte_val);
+		young = pte_young(pte_val);
+		dirty = pte_dirty(pte_val);
+	} else if (is_swap_pte(pte_val)) {
+		swp_entry_t swpent = pte_to_swp_entry(pte_val);
 
 		if (!non_swap_entry(swpent)) {
 			int mapcount;
