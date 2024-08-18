@@ -224,6 +224,8 @@ void *rr_record_cfu(const void __user *from, void *to, long unsigned int n)
 
     /* We reserve one more byte here for the buffer so in the replay, the extra byte is filled with
        zero, same as rr_record_strncpy_user */
+    rr_begin_cfu(from, to, n);
+
     event = rr_alloc_new_event_entry(sizeof(rr_cfu) + (n + 1) * sizeof(unsigned char), EVENT_TYPE_CFU);
     if (event == NULL) {
         panic("Failed to allocate");
@@ -402,3 +404,6 @@ void rr_record_release(int cpu_id)
     event->type = EVENT_TYPE_RELEASE;
     event->id = cpu_id;
 }
+
+void rr_begin_cfu(const void __user *from, void *to, long unsigned int n)
+{ return; }

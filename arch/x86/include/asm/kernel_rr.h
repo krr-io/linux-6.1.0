@@ -130,6 +130,6 @@ void rr_handle_irqentry(void);
 // bool rr_is_switch_to_user(struct task_struct *task, bool before);
 void rr_bug(int expected, int cur);
 void rr_set_lock_owner(int owner);
-
+void rr_begin_cfu(const void __user *from, void *to, long unsigned int n);
 
 #endif /* _ASM_X86_KERNEL_RR_H */
