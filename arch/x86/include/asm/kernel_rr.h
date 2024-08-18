@@ -44,6 +44,7 @@ typedef struct {
 typedef struct {
     int id;
     unsigned long val;
+    unsigned long ptr;
 } rr_gfu;
 
 typedef struct {
@@ -115,7 +116,7 @@ void *rr_alloc_new_event_entry(unsigned long size, int type);
 bool rr_queue_inited(void);
 int rr_enabled(void);
 void *rr_record_cfu(const void __user *from, void *to, long unsigned int n);
-void rr_record_gfu(unsigned long val);
+void rr_record_gfu(unsigned long val, unsigned long ptr);
 void rr_record_random(void *buf, int len);
 void rr_record_strnlen_user(unsigned long val, unsigned long src);
 void rr_record_strncpy_user(const void __user *from, void *to, long unsigned int n);

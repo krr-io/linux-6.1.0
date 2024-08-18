@@ -249,7 +249,7 @@ finish:
     return addr;
 }
 
-void rr_record_gfu(unsigned long val)
+void rr_record_gfu(unsigned long val, unsigned long ptr)
 {
     unsigned long flags;
     void *event;
@@ -275,6 +275,7 @@ void rr_record_gfu(unsigned long val)
 
     gfu->id = 0;
     gfu->val = val;
+    gfu->ptr = ptr;
 
 finish:
     local_irq_restore(flags);
