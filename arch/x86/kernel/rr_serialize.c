@@ -107,8 +107,6 @@ void rr_release_smp_exec(int ctx)
     preempt_disable();
     cpu_id = smp_processor_id();
 
-    rr_record_release(cpu_id);
-
     atomic_set(&current_owner, -1);
     rr_set_lock_owner(-1);
 
