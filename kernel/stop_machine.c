@@ -22,6 +22,7 @@
 #include <linux/atomic.h>
 #include <linux/nmi.h>
 #include <linux/sched/wake_q.h>
+#include <asm/kernel_rr.h>
 
 /*
  * Structure to determine completion condition and record errors.  May
@@ -226,7 +227,9 @@ static int multi_cpu_stop(void *data)
 	/* Simple state machine */
 	do {
 		/* Chill out and ensure we re-read multi_stop_state. */
+		rr_release_smp_exec(CTX_LOCKWAIT);
 		stop_machine_yield(cpumask);
+		rr_acquire_smp_exec(CTX_LOCKWAIT, true);
 		newstate = READ_ONCE(msdata->state);
 		if (newstate != curstate) {
 			curstate = newstate;
