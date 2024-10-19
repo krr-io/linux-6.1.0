@@ -177,7 +177,7 @@ void *rr_record_cfu(const void __user *from, void *to, long unsigned int n)
     return addr;
 }
 
-void *rr_gfu_begin(unsigned long ptr, int size, int align)
+void *rr_gfu_begin(const void __user *ptr, int size, int align)
 {
     unsigned long flags;
     void *event;
@@ -201,7 +201,7 @@ void *rr_gfu_begin(unsigned long ptr, int size, int align)
     gfu = (rr_gfu *)event;
 
     gfu->id = 0;
-    gfu->ptr = ptr;
+    gfu->ptr = (unsigned long)ptr;
     gfu->size = size;
 
     local_irq_restore(flags);
