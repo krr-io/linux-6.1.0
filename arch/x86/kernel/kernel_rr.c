@@ -2,6 +2,7 @@
 #include <asm/kernel_rr.h>
 #include <asm/traps.h>
 #include <linux/ptrace.h>
+#include <asm/msr.h>
 
 
 static void rr_record_syscall(struct pt_regs *regs, int cpu_id, unsigned long spin_count)
@@ -628,3 +629,34 @@ pte_t rr_read_pte_once(pte_t *pte)
 
     return rr_pte;
 }
+
+unsigned long *rr_rdtsc_begin(void)
+{
+    unsigned long flags;
+    void *event;
+    rr_io_input *input = NULL;
+
+    if (!rr_queue_inited()) {
+        return NULL;
+    }
+
+    if (!rr_enabled()) {
+        return NULL;
+    }
+
+    local_irq_save(flags);
+
+    event = rr_alloc_new_event_entry(sizeof(rr_io_input), EVENT_TYPE_RDTSC);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+
+    input = (rr_io_input *)event;
+
+    input->id = 0;
+
+    local_irq_restore(flags);
+
+    return &(input->value);
+}
+EXPORT_SYMBOL_GPL(rr_rdtsc_begin);

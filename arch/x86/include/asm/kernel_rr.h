@@ -9,6 +9,7 @@
 #define EVENT_TYPE_SYSCALL   2
 #define EVENT_TYPE_CFU       4
 #define EVENT_TYPE_RANDOM    5
+#define EVENT_TYPE_RDTSC     6
 #define EVENT_TYPE_GFU       8
 #define EVENT_TYPE_STRNLEN   9
 #define EVENT_TYPE_RDSEED    10
@@ -143,5 +144,6 @@ void inline rr_record_pte_end(void *event, unsigned long pte_val);
 unsigned long rr_record_pte_clear(pte_t *xp);
 pte_t rr_read_pte(pte_t *pte);
 pte_t rr_read_pte_once(pte_t *pte);
+unsigned long *rr_rdtsc_begin(void);
 
 #endif /* _ASM_X86_KERNEL_RR_H */

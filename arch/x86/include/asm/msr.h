@@ -6,6 +6,8 @@
 
 #ifndef __ASSEMBLY__
 
+#include <asm/pgtable_64_types.h>
+#include <asm/kernel_rr.h>
 #include <asm/asm.h>
 #include <asm/errno.h>
 #include <asm/cpumask.h>
@@ -181,9 +183,16 @@ static __always_inline unsigned long long rdtsc(void)
 {
 	DECLARE_ARGS(val, low, high);
 
+	unsigned long *rr_val = rr_rdtsc_begin();
+
 	asm volatile("rdtsc" : EAX_EDX_RET(val, low, high));
 
-	return EAX_EDX_VAL(val, low, high);
+	if (unlikely(rr_val == NULL)) {
+		return EAX_EDX_VAL(val, low, high);
+	}
+
+	*rr_val = EAX_EDX_VAL(val, low, high);
+	return *rr_val;
 }
 
 /**
@@ -197,6 +206,8 @@ static __always_inline unsigned long long rdtsc(void)
 static __always_inline unsigned long long rdtsc_ordered(void)
 {
 	DECLARE_ARGS(val, low, high);
+
+	unsigned long *rr_val = rr_rdtsc_begin();
 
 	/*
 	 * The RDTSC instruction is not ordered relative to memory
@@ -219,7 +230,12 @@ static __always_inline unsigned long long rdtsc_ordered(void)
 			/* RDTSCP clobbers ECX with MSR_TSC_AUX. */
 			:: "ecx");
 
-	return EAX_EDX_VAL(val, low, high);
+	if (unlikely(rr_val == NULL)) {
+		return EAX_EDX_VAL(val, low, high);
+	}
+
+	*rr_val = EAX_EDX_VAL(val, low, high);
+	return *rr_val;
 }
 
 static inline unsigned long long native_read_pmc(int counter)

@@ -9,6 +9,7 @@
  *  sponsored by Rohde & Schwarz GmbH & Co. KG Munich/Germany
  */
 #include <linux/time.h>
+#include <asm/kernel_rr.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 
