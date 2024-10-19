@@ -135,7 +135,7 @@ void rr_handle_irqentry(void);
 void rr_bug(int expected, int cur);
 void rr_set_lock_owner(int owner);
 void rr_begin_cfu(const void __user *from, void *to, long unsigned int n);
-void *rr_gfu_begin(unsigned long ptr, int size, int align);
+void *rr_gfu_begin(const void __user *ptr, int size, int align);
 void rr_record_gfu_end(unsigned long val, void *event);
 void *rr_cfu_begin(const void __user *from, void *to, long unsigned int n);
 void rr_cfu_end(void *addr, void *to, long unsigned int n);
