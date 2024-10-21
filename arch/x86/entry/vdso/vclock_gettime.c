@@ -8,8 +8,9 @@
  * 32 Bit compat layer by Stefani Seibold <stefani@seibold.net>
  *  sponsored by Rohde & Schwarz GmbH & Co. KG Munich/Germany
  */
+#define VDSO_BUILD 0
+
 #include <linux/time.h>
-#include <asm/kernel_rr.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 

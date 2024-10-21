@@ -658,4 +658,3 @@ unsigned long *rr_rdtsc_begin(void)
 
     return &(input->value);
 }
-EXPORT_SYMBOL_GPL(rr_rdtsc_begin);
