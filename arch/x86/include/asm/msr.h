@@ -6,8 +6,10 @@
 
 #ifndef __ASSEMBLY__
 
+#ifndef VDSO_BUILD
 #include <asm/pgtable_64_types.h>
 #include <asm/kernel_rr.h>
+#endif
 #include <asm/asm.h>
 #include <asm/errno.h>
 #include <asm/cpumask.h>
@@ -183,6 +185,7 @@ static __always_inline unsigned long long rdtsc(void)
 {
 	DECLARE_ARGS(val, low, high);
 
+#ifndef VDSO_BUILD
 	unsigned long *rr_val = rr_rdtsc_begin();
 
 	asm volatile("rdtsc" : EAX_EDX_RET(val, low, high));
@@ -193,6 +196,10 @@ static __always_inline unsigned long long rdtsc(void)
 
 	*rr_val = EAX_EDX_VAL(val, low, high);
 	return *rr_val;
+#else
+	asm volatile("rdtsc" : EAX_EDX_RET(val, low, high));
+	return EAX_EDX_VAL(val, low, high);
+#endif
 }
 
 /**
@@ -207,6 +214,7 @@ static __always_inline unsigned long long rdtsc_ordered(void)
 {
 	DECLARE_ARGS(val, low, high);
 
+#ifndef VDSO_BUILD
 	unsigned long *rr_val = rr_rdtsc_begin();
 
 	/*
@@ -236,6 +244,16 @@ static __always_inline unsigned long long rdtsc_ordered(void)
 
 	*rr_val = EAX_EDX_VAL(val, low, high);
 	return *rr_val;
+#else
+	asm volatile(ALTERNATIVE_2("rdtsc",
+				   "lfence; rdtsc", X86_FEATURE_LFENCE_RDTSC,
+				   "rdtscp", X86_FEATURE_RDTSCP)
+			: EAX_EDX_RET(val, low, high)
+			/* RDTSCP clobbers ECX with MSR_TSC_AUX. */
+			:: "ecx");
+
+	return EAX_EDX_VAL(val, low, high);
+#endif
 }
 
 static inline unsigned long long native_read_pmc(int counter)
