@@ -9,6 +9,26 @@
 #ifndef VDSO_BUILD
 #include <asm/pgtable_64_types.h>
 #include <asm/kernel_rr.h>
+#include <linux/irqflags.h>
+
+#define RR_RDTSC_BEGIN(expr) ({ \
+    unsigned long flags; \
+    void *event; \
+    if (!rr_queue_inited() || !rr_enabled()) { \
+		expr; \
+	} else { \
+        local_irq_save(flags); \
+        event = rr_alloc_new_event_entry(sizeof(rr_io_input), EVENT_TYPE_RDTSC); \
+        if (event == NULL) { \
+            panic("Failed to allocate entry"); \
+        } \
+        input = (rr_io_input *)event; \
+        input->id = 0; \
+		expr; \
+        local_irq_restore(flags); \
+    } \
+})
+
 #endif
 #include <asm/asm.h>
 #include <asm/errno.h>
@@ -186,16 +206,16 @@ static __always_inline unsigned long long rdtsc(void)
 	DECLARE_ARGS(val, low, high);
 
 #ifndef VDSO_BUILD
-	unsigned long *rr_val = rr_rdtsc_begin();
+    rr_io_input *input = NULL;
 
-	asm volatile("rdtsc" : EAX_EDX_RET(val, low, high));
+	RR_RDTSC_BEGIN(asm volatile("rdtsc" : EAX_EDX_RET(val, low, high)));
 
-	if (unlikely(rr_val == NULL)) {
+	if (unlikely(input == NULL)) {
 		return EAX_EDX_VAL(val, low, high);
 	}
 
-	*rr_val = EAX_EDX_VAL(val, low, high);
-	return *rr_val;
+	input->value = EAX_EDX_VAL(val, low, high);
+	return input->value;
 #else
 	asm volatile("rdtsc" : EAX_EDX_RET(val, low, high));
 	return EAX_EDX_VAL(val, low, high);
@@ -215,7 +235,7 @@ static __always_inline unsigned long long rdtsc_ordered(void)
 	DECLARE_ARGS(val, low, high);
 
 #ifndef VDSO_BUILD
-	unsigned long *rr_val = rr_rdtsc_begin();
+    rr_io_input *input = NULL;
 
 	/*
 	 * The RDTSC instruction is not ordered relative to memory
@@ -231,19 +251,19 @@ static __always_inline unsigned long long rdtsc_ordered(void)
 	 * Thus, use the preferred barrier on the respective CPU, aiming for
 	 * RDTSCP as the default.
 	 */
-	asm volatile(ALTERNATIVE_2("rdtsc",
+	RR_RDTSC_BEGIN(asm volatile(ALTERNATIVE_2("rdtsc",
 				   "lfence; rdtsc", X86_FEATURE_LFENCE_RDTSC,
 				   "rdtscp", X86_FEATURE_RDTSCP)
 			: EAX_EDX_RET(val, low, high)
 			/* RDTSCP clobbers ECX with MSR_TSC_AUX. */
-			:: "ecx");
+			:: "ecx"));
 
-	if (unlikely(rr_val == NULL)) {
+	if (unlikely(input == NULL)) {
 		return EAX_EDX_VAL(val, low, high);
 	}
 
-	*rr_val = EAX_EDX_VAL(val, low, high);
-	return *rr_val;
+	input->value = EAX_EDX_VAL(val, low, high);
+	return input->value;
 #else
 	asm volatile(ALTERNATIVE_2("rdtsc",
 				   "lfence; rdtsc", X86_FEATURE_LFENCE_RDTSC,
