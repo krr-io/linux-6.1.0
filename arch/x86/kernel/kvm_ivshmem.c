@@ -17,6 +17,7 @@
 #include <linux/hardirq.h>
 #include <asm/uaccess.h>
 #include <linux/interrupt.h>
+#include <linux/kvm_para.h>
 
 #include <asm/kernel_rr.h>
 
@@ -446,10 +447,11 @@ void *rr_alloc_new_event_entry(unsigned long size, int type)
     header = (rr_event_guest_queue_header *)kvm_ivshmem_dev.base_addr;
 
     if (header->current_byte + event_size >= header->total_size) {
-        printk(KERN_ERR "RR queue is full, start over\n");
-		header->rotated_bytes += header->current_byte;
-        header->current_byte = header->header_size;
-		header->current_pos = 0;
+        kvm_hypercall0(102);
+        // printk(KERN_ERR "RR queue is full, start over\n");
+		// header->rotated_bytes += header->current_byte;
+        // header->current_byte = header->header_size;
+		// header->current_pos = 0;
     }
 
 	offset = (unsigned long)kvm_ivshmem_dev.base_addr + header->current_byte;
