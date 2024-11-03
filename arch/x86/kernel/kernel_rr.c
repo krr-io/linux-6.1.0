@@ -46,7 +46,7 @@ __visible noinstr void rr_record_syscall(struct pt_regs *regs)
     syscall->regs.r13 = regs->r13;
     syscall->regs.r14 = regs->r14;
     syscall->regs.r15 = regs->r15;
-    syscall->cr3 = __read_cr3(); 
+    syscall->cr3 = __read_cr3();
 
     local_irq_restore(flags);
 }

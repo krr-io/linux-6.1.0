@@ -1184,10 +1184,9 @@ DEFINE_IDTENTRY_DEBUG(exc_debug)
 /* User entry, runs on regular task stack */
 DEFINE_IDTENTRY_DEBUG_USER(exc_debug)
 {
-	unsigned long dr6 = debug_read_clear_dr6();
-
-	rr_record_exception(regs, DB_VECTOR, 0, dr6);
-	exc_debug_user(regs, dr6);
+	// unsigned long dr6 = debug_read_clear_dr6();
+	// rr_record_exception(regs, DB_VECTOR, 0, dr6);
+	exc_debug_user(regs, debug_read_clear_dr6());
 }
 #else
 /* 32 bit does not have separate entry points. */
