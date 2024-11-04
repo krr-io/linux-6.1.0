@@ -21,6 +21,8 @@ static inline void kmap_local_fork(struct task_struct *tsk) { }
 static inline void kmap_assert_nomap(void) { }
 #endif
 
+void *rr_record_page_map(struct page *p, void *addr);
+
 #ifdef CONFIG_HIGHMEM
 #include <asm/highmem.h>
 
@@ -179,7 +181,11 @@ static inline void kunmap(struct page *page)
 
 static inline void *kmap_local_page(struct page *page)
 {
-	return page_address(page);
+	if (!PageAnon(page)) {
+        return page_address(page);
+    }
+
+	return rr_record_page_map(page, page_address(page));
 }
 
 static inline void *kmap_local_folio(struct folio *folio, size_t offset)

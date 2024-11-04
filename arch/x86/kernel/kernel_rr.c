@@ -3,6 +3,7 @@
 #include <asm/traps.h>
 #include <linux/ptrace.h>
 #include <asm/msr.h>
+#include <linux/highmem-internal.h>
 
 __visible noinstr void rr_record_syscall(struct pt_regs *regs)
 {
@@ -553,4 +554,40 @@ unsigned long *rr_rdtsc_begin(void)
     local_irq_restore(flags);
 
     return &(input->value);
+}
+
+void *rr_record_page_map(struct page *p, void *addr)
+{
+    unsigned long flags;
+    rr_cfu *event;
+    void *dst_addr;
+
+    if (!rr_queue_inited()) {
+        return addr;
+    }
+
+    if (!rr_enabled()) {
+        return addr;
+    }
+
+    local_irq_save(flags);
+
+    event = (rr_cfu *)rr_alloc_new_event_entry(sizeof(rr_cfu) + PAGE_SIZE, EVENT_TYPE_CFU);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+
+    event->id = 0;
+    event->src_addr = (unsigned long)addr;
+    event->dest_addr = 0;
+    event->len = PAGE_SIZE;
+    event->data = NULL;
+
+    dst_addr = (void *)((unsigned long)event + sizeof(rr_cfu));
+
+    memcpy(dst_addr, addr, PAGE_SIZE);
+
+    local_irq_restore(flags);
+
+    return addr;
 }
