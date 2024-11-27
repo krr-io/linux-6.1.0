@@ -141,7 +141,7 @@ void rr_record_gfu_end(unsigned long val, void *event);
 void *rr_cfu_begin(const void __user *from, void *to, long unsigned int n);
 void rr_cfu_end(void *addr, void *to, long unsigned int n);
 void *rr_record_pte_begin(unsigned long ptr);
-void inline rr_record_pte_end(void *event, unsigned long pte_val);
+void rr_record_pte_end(void *event, unsigned long pte_val);
 unsigned long rr_record_pte_clear(pte_t *xp);
 pte_t rr_read_pte(pte_t *pte);
 pte_t rr_read_pte_once(pte_t *pte);
