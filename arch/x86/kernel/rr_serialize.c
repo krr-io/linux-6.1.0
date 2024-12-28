@@ -14,6 +14,7 @@
 static int initialized = 0;
 volatile unsigned long lock = 0;
 static atomic_t current_owner;
+int skip_lock = 0;
 
 static inline unsigned long long read_pmc(int counter)
 {
@@ -33,6 +34,9 @@ long rr_do_acquire_smp_exec(int disable_irq, int cpu_id, int ctx)
     unsigned long spin_count = 0;
 
     if (!initialized)
+        return -1;
+
+    if (skip_lock)
         return -1;
 
     // During spining the exec lock, disable the interrupt,
@@ -66,10 +70,13 @@ finish:
 
 void init_smp_exec_lock(void)
 {
-    printk(KERN_INFO "Initialized SMP exec lock");
-
     atomic_set(&current_owner, -1);
     initialized = 1;
+    if (num_online_cpus() == 1) {
+        skip_lock = 1;
+    }
+
+    printk(KERN_INFO "Initialized SMP exec lock, skip_lock=%d", skip_lock);
 }
 
 long rr_acquire_smp_exec(int ctx, int disable_irq)
@@ -100,6 +107,9 @@ void rr_release_smp_exec(int ctx)
     int cpu_id;
 
     if (!initialized)
+        return;
+
+    if (skip_lock)
         return;
 
     local_irq_save(flags);
