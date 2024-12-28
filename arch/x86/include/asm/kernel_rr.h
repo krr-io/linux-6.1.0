@@ -147,4 +147,22 @@ pte_t rr_read_pte(pte_t *pte);
 pte_t rr_read_pte_once(pte_t *pte);
 unsigned long *rr_rdtsc_begin(void);
 
+/* === io uring related functions === */
+void rr_begin_record_io_uring(void);
+void rr_end_record_io_uring(unsigned int value, unsigned long addr);
+void rr_record_io_uring_entry(void *data, int size, unsigned long addr);
+
+#define RECORD_SQ_TAIL(stmt, addr) ({ \
+   unsigned int tail; \
+   rr_begin_record_io_uring(); \
+   tail = (stmt); \
+   rr_end_record_io_uring(tail, (unsigned long)addr); \
+   tail; \
+})
+
+#define RECORD_IO_URING_ENTRY(data, size) ({ \
+   rr_record_io_uring_entry((void *)data, size, (unsigned long)data); \
+   data; \
+})
+
 #endif /* _ASM_X86_KERNEL_RR_H */

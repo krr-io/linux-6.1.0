@@ -695,3 +695,66 @@ void *rr_record_page_map(struct page *p, void *addr)
 
     return addr;
 }
+
+void rr_end_record_io_uring(unsigned int value, unsigned long addr)
+{
+    unsigned long flags;
+    rr_gfu *event;
+
+    if (!rr_queue_inited()) {
+        return;
+    }
+
+    if (!rr_enabled()) {
+        return;
+    }
+
+    local_irq_save(flags);
+
+    event = (rr_gfu *)rr_alloc_new_event_entry(sizeof(rr_gfu), EVENT_TYPE_GFU);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+    event->val = value;
+    event->ptr = addr;
+    event->size = sizeof(unsigned int);
+
+    local_irq_restore(flags);
+}
+
+void rr_begin_record_io_uring(void)
+{
+    return;
+}
+
+void rr_record_io_uring_entry(void *data, int size, unsigned long addr)
+{
+    unsigned long flags;
+    rr_cfu *event;
+    void *dst_addr;
+
+    if (!rr_queue_inited()) {
+        return;
+    }
+
+    if (!rr_enabled()) {
+        return;
+    }
+
+    local_irq_save(flags);
+
+    event = (rr_cfu *)rr_alloc_new_event_entry(sizeof(rr_cfu) + size * sizeof(unsigned char), EVENT_TYPE_CFU);
+    if (event == NULL) {
+        panic("Failed to allocate entry");
+    }
+
+    dst_addr = (void *)((unsigned long)event + sizeof(rr_cfu));
+
+    event->len = size;
+    event->src_addr = addr;
+    event->data = NULL;
+
+    memcpy(dst_addr, data, size);
+
+    local_irq_restore(flags);
+}

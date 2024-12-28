@@ -2241,7 +2241,7 @@ static const struct io_uring_sqe *io_get_sqe(struct io_ring_ctx *ctx)
 		/* double index for 128-byte SQEs, twice as long */
 		if (ctx->flags & IORING_SETUP_SQE128)
 			head <<= 1;
-		return &ctx->sq_sqes[head];
+		return RECORD_IO_URING_ENTRY(&ctx->sq_sqes[head], sizeof(ctx->sq_sqes[head]));
 	}
 
 	/* drop invalid entries */

@@ -225,7 +225,7 @@ static inline bool io_sqring_full(struct io_ring_ctx *ctx)
 {
 	struct io_rings *r = ctx->rings;
 
-	return READ_ONCE(r->sq.tail) - ctx->cached_sq_head == ctx->sq_entries;
+	return RECORD_SQ_TAIL(READ_ONCE(r->sq.tail), &r->sq.tail) - ctx->cached_sq_head == ctx->sq_entries;
 }
 
 static inline unsigned int io_sqring_entries(struct io_ring_ctx *ctx)
@@ -233,7 +233,7 @@ static inline unsigned int io_sqring_entries(struct io_ring_ctx *ctx)
 	struct io_rings *rings = ctx->rings;
 
 	/* make sure SQ entry isn't read before tail */
-	return smp_load_acquire(&rings->sq.tail) - ctx->cached_sq_head;
+	return RECORD_SQ_TAIL(smp_load_acquire(&rings->sq.tail), &rings->sq.tail) - ctx->cached_sq_head;
 }
 
 static inline int io_run_task_work(void)
