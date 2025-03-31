@@ -125,3 +125,8 @@ void rr_release_smp_exec(int ctx)
     preempt_enable();
     local_irq_restore(flags);
 }
+
+int is_initialized(void)
+{
+    return initialized;
+}
