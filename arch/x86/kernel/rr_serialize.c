@@ -31,7 +31,7 @@ static inline unsigned long long read_pmc(int counter)
 long rr_do_acquire_smp_exec(int disable_irq, int cpu_id, int ctx)
 {
     unsigned long flags;
-    unsigned long spin_count = 0;
+    long spin_count = 0;
 
     if (!initialized)
         return -1;
@@ -59,7 +59,7 @@ long rr_do_acquire_smp_exec(int disable_irq, int cpu_id, int ctx)
     rr_set_lock_owner(cpu_id);
 
     if (unlikely(ctx == CTX_LOCKWAIT))
-        kvm_hypercall0(KVM_INSTRUCTION_SYNC);
+        kvm_hypercall1(KVM_INSTRUCTION_SYNC, spin_count);
 
 finish:
     if (disable_irq)
