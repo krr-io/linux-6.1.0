@@ -16,6 +16,10 @@ volatile unsigned long lock = 0;
 static atomic_t current_owner;
 int skip_lock = 0;
 
+/*
+ * Reads performance monitoring counter using RDPMC instruction
+ * Returns: 64-bit counter value
+ */
 static inline unsigned long long read_pmc(int counter)
 {
     unsigned low, high;
@@ -28,6 +32,10 @@ static inline unsigned long long read_pmc(int counter)
     return ((unsigned long long)high << 32) | low;
 }
 
+/*
+ * Core lock acquisition with spinning and interrupt control
+ * Returns: spin count (>=0) on success, -1 if already owned by this CPU or skipped
+ */
 long rr_do_acquire_smp_exec(int disable_irq, int cpu_id, int ctx)
 {
     unsigned long flags;
@@ -68,6 +76,9 @@ finish:
     return spin_count;
 }
 
+/*
+ * Initialize the SMP execution lock system
+ */
 void init_smp_exec_lock(void)
 {
     atomic_set(&current_owner, -1);
@@ -79,6 +90,10 @@ void init_smp_exec_lock(void)
     printk(KERN_INFO "Initialized SMP exec lock, skip_lock=%d", skip_lock);
 }
 
+/*
+ * Acquire SMP execution lock with preemption control
+ * Returns: spin count on success, 0 if not initialized
+ */
 long rr_acquire_smp_exec(int ctx, int disable_irq)
 {
     int cpu_id;
@@ -98,9 +113,15 @@ long rr_acquire_smp_exec(int ctx, int disable_irq)
     return spin_count;
 }
 
+/*
+ * Debug stub function - currently unused
+ */
 __maybe_unused void rr_bug(int expected, int cur) {
 };
 
+/*
+ * Release the SMP execution lock
+ */
 void rr_release_smp_exec(int ctx)
 {
     unsigned long flags;
