@@ -74,6 +74,9 @@ static loff_t kvm_ivshmem_lseek(struct file * filp, loff_t offset, int origin);
 
 enum ivshmem_ioctl { set_sema, down_sema, empty, wait_event, wait_event_irq, read_ivposn, read_livelist, sema_irq };
 
+static unsigned long lock_owner_offset = sizeof(rr_event_guest_queue_header);
+static unsigned long vcpu_inst_cnt_offset = sizeof(rr_event_guest_queue_header) + sizeof(unsigned long);
+
 static const struct file_operations kvm_ivshmem_ops = {
 	.owner   = THIS_MODULE,
 	.open	= kvm_ivshmem_open,
@@ -469,10 +472,13 @@ void *rr_alloc_new_event_entry(unsigned long size, int type)
 
 void rr_set_lock_owner(int owner)
 {
-	if (!rr_queue_inited())
-		return;
+	atomic_set(kvm_ivshmem_dev.base_addr + lock_owner_offset, owner);
+}
 
-	atomic_set(kvm_ivshmem_dev.base_addr + sizeof(rr_event_guest_queue_header), owner);
+
+rr_interrupt *rr_get_cpu_intr_info(int cpu_id)
+{
+	return (rr_interrupt *)(kvm_ivshmem_dev.base_addr + vcpu_inst_cnt_offset + sizeof(rr_interrupt) * cpu_id);
 }
 
 static void rr_warmup_shared_memory(unsigned long total_size)
@@ -516,7 +522,7 @@ int rr_enabled(void)
 static void rr_init_queue(void)
 {
     rr_event_guest_queue_header header = {
-        .header_size = PAGE_SIZE,
+        .header_size = 2 * PAGE_SIZE,
         .entry_size = 2 * PAGE_SIZE,
         .rr_enabled = 0,
 		.rotated_bytes = 0,

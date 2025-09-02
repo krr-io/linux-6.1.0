@@ -168,7 +168,7 @@ void rr_handle_exception(struct pt_regs *regs, int vector, int error_code, unsig
 /*
  * Record interrupt entry event
  */
-static void rr_record_irqentry(int cpu_id, unsigned long spin_count)
+static void rr_record_irqentry(int cpu_id, unsigned long spin_count, rr_interrupt *info)
 {
     rr_event_log_guest *event;
     rr_interrupt *interrupt;
@@ -187,6 +187,7 @@ static void rr_record_irqentry(int cpu_id, unsigned long spin_count)
     }
 
     interrupt = (rr_interrupt *)event;
+    memcpy(interrupt, info, sizeof(rr_interrupt));
 
     interrupt->id = cpu_id;
     interrupt->from = 3;
@@ -212,7 +213,7 @@ void rr_handle_irqentry(void)
         goto finish;
     }
 
-    rr_record_irqentry(cpu_id, spin_count);
+    rr_record_irqentry(cpu_id, spin_count, rr_get_cpu_intr_info(cpu_id));
 
 finish:
     preempt_enable();

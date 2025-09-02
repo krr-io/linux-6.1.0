@@ -143,6 +143,7 @@ unsigned long rr_record_pte_clear(pte_t *xp);
 pte_t rr_read_pte(pte_t *pte);
 pte_t rr_read_pte_once(pte_t *pte);
 unsigned long *rr_rdtsc_begin(void);
+rr_interrupt *rr_get_cpu_intr_info(int cpu_id);
 
 /* === io uring related functions === */
 void rr_begin_record_io_uring(void);
