@@ -32,9 +32,9 @@ KCSAN_SANITIZE := n
 KMSAN_SANITIZE_head$(BITS).o				:= n
 KMSAN_SANITIZE_nmi.o					:= n
 
-KASAN_SANITIZE_kernel_rr := n
-KASAN_SANITIZE_rr_serialize := n
-KASAN_SANITIZE_kvm_ivshmem := n
+KASAN_SANITIZE_kernel_rr.o := n
+KASAN_SANITIZE_rr_serialize.o := n
+KASAN_SANITIZE_kvm_ivshmem.o := n
 
 # If instrumentation of this dir is enabled, boot hangs during first second.
 # Probably could be more selective here, but note that files related to irqs,
