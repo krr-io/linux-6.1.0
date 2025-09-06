@@ -410,9 +410,11 @@ static __always_inline void csd_lock_wait(struct __call_single_data *csd)
 		return;
 	}
 
+	local_irq_disable();
 	rr_release_smp_exec(CTX_LOCKWAIT);
 	smp_cond_load_acquire(&csd->node.u_flags, !(VAL & CSD_FLAG_LOCK));
 	rr_acquire_smp_exec(CTX_LOCKWAIT, true);
+	local_irq_enable();
 }
 
 static void __smp_call_single_queue_debug(int cpu, struct llist_node *node)
