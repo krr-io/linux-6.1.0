@@ -118,6 +118,8 @@ static inline void syscall_get_arguments(struct task_struct *task,
 	}
 }
 
+void rr_handle_syscall(struct pt_regs *regs);
+
 static inline int syscall_get_arch(struct task_struct *task)
 {
 	/* x32 tasks should be considered AUDIT_ARCH_X86_64. */
@@ -129,7 +131,6 @@ static inline int syscall_get_arch(struct task_struct *task)
 void do_syscall_64(struct pt_regs *regs, int nr);
 void do_int80_syscall_32(struct pt_regs *regs);
 long do_fast_syscall_32(struct pt_regs *regs);
-void rr_handle_syscall(struct pt_regs *regs);
 
 #endif	/* CONFIG_X86_32 */
 
