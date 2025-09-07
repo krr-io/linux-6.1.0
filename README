@@ -1,3 +1,24 @@
+# KRR Guest Linux
+This is the guest linux kernel(based on linux-6.1.0) KRR is based on for its in-guest agent development.
+
+Apply the guest agent to a new kernel version? Just do the following step:
+1. Generate the all-in-one patch file:
+```
+bash generate_patch.sh 
+```
+The patch file will be generated as `Support-KRR-guest-agent.patch`.
+
+2. Apply this patch file to your own linux version source code:
+```
+git apply --reject Support-KRR-guest-agent.patch
+```
+Note there might be some conflicts that need to be manually resolved, see if any .rej file has been generated.
+
+3. Before compile it, turn off the following configuration (`make menuconfig`) that has not been supported by KRR record replay yet:
+```
+Processor type and features -> Linux guest support
+```
+
 Linux kernel
 ============
 

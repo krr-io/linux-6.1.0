@@ -52,6 +52,7 @@ directories_to_remove=(
     "rr_config_replay"
     "rr_scripts/"
     "generate_patch.sh"
+    "README"
 )
 
 # Create a backup branch
