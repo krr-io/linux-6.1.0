@@ -453,6 +453,7 @@ irqentry_state_t noinstr irqentry_nmi_enter(struct pt_regs *regs)
 
 	irq_state.lockdep = lockdep_hardirqs_enabled();
 
+	rr_handle_irqentry();
 	__nmi_enter();
 	lockdep_hardirqs_off(CALLER_ADDR0);
 	lockdep_hardirq_enter();
@@ -482,4 +483,5 @@ void noinstr irqentry_nmi_exit(struct pt_regs *regs, irqentry_state_t irq_state)
 	if (irq_state.lockdep)
 		lockdep_hardirqs_on(CALLER_ADDR0);
 	__nmi_exit();
+	rr_release_smp_exec(CTX_INTR);
 }
