@@ -14,10 +14,11 @@ git apply --reject Support-KRR-guest-agent.patch
 ```
 Note there might be some conflicts that need to be manually resolved, see if any .rej file has been generated.
 
-3. Before compile it, turn off the following configuration (`make menuconfig`) that has not been supported by KRR record replay yet:
+3. Before compiling, disable the following configuration, which KRR record/replay does not support yet:
 ```
-Processor type and features -> Linux guest support
+Processor type and features -> Linux guest support    (CONFIG_HYPERVISOR_GUEST)
 ```
+You can turn it off in `make menuconfig`.
 
 Linux kernel
 ============
